@@ -9,3 +9,9 @@ export const REPO_URL = 'https://github.com/SaigeNick/hethereau-ledger'
 
 /** Optional contact email for privacy and takedown requests. Empty = GitHub Issues. */
 export const CONTACT_EMAIL = 'hethereau.ledger@gmail.com'
+
+/**
+ * Google OAuth client ID (Web application) for Google Drive sync. Public by design.
+ * Empty = the Drive section is hidden. Scope: drive.appdata (non-sensitive).
+ */
+export const GOOGLE_CLIENT_ID = ''

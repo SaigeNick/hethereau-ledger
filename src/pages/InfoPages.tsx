@@ -175,6 +175,7 @@ const FAQ: Record<Lang, Faq> = {
             q: 'Як дивитися свої крутки з телефона?',
             a: [
               'Створіть посилання на сторінці [Профіль](#/profile) на ПК і відскануйте QR-код телефоном. Натисніть «Зберегти на цьому пристрої» — крутки з’являться на телефоні. Посилання оновлюється саме після кожного імпорту на ПК, а на телефоні достатньо відкрити його знову й натиснути «Оновити копію».',
+              'Інший спосіб — підключити Google Drive на обох пристроях у [Профілі](#/profile). Тоді крутки синхронізуються через ваш власний Диск.',
             ],
           },
           {
@@ -191,7 +192,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Ви використовуєте cookies, рекламу чи аналітику?',
             a: [
-              'Ні. На сайті немає cookies, реклами, аналітики й сторонніх скриптів, а шрифти й картинки завантажуються з нашого ж домену. Подробиці — у [політиці конфіденційності](#/privacy).',
+              'Ні. На сайті немає cookies, реклами, аналітики й сторонніх скриптів (крім входу Google, і лише якщо ви самі підключаєте Google Drive), а шрифти й картинки завантажуються з нашого ж домену. Подробиці — у [політиці конфіденційності](#/privacy).',
             ],
           },
         ],
@@ -307,6 +308,7 @@ const FAQ: Record<Lang, Faq> = {
             q: 'How do I see my pulls on my phone?',
             a: [
               'Create a link on the [Profile](#/profile) page on your PC and scan the QR code with your phone. Press “Save on this device” and your pulls appear on the phone. The link updates itself after every import on the PC; on the phone just open it again and press “Update the copy”.',
+              'Another way is to connect Google Drive on both devices in [Profile](#/profile). Your pulls then sync through your own Drive.',
             ],
           },
           {
@@ -323,7 +325,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Do you use cookies, ads or analytics?',
             a: [
-              'No. There are no cookies, ads, analytics or third-party scripts, and fonts and images load from our own domain. Details are in the [privacy policy](#/privacy).',
+              'No. There are no cookies, ads, analytics or third-party scripts (except Google sign-in, and only if you connect Google Drive yourself), and fonts and images load from our own domain. Details are in the [privacy policy](#/privacy).',
             ],
           },
         ],
@@ -442,6 +444,14 @@ const PRIVACY: Record<Lang, Doc> = {
         ],
       },
       {
+        id: 'drive',
+        title: 'Google Drive',
+        body: [
+          'Якщо ви підключите Google Drive, сайт прямо з вашого браузера зберігатиме копію всіх профілів і круток у прихованій папці застосунку на вашому Диску. Для цього потрібен лише дозвіл drive.appdata: сайт бачить тільки власний файл і не має доступу до інших ваших файлів. Ключ доступу живе лише у вкладці браузера, а файл не проходить через наш сервер, тож ми його не бачимо.',
+          'Обробку даних на боці Google регулює [політика конфіденційності Google](https://policies.google.com/privacy). Відключити синхронізацію або видалити копію можна на сторінці [Профіль](#/profile), а скасувати доступ сайту — у [налаштуваннях акаунта Google](https://myaccount.google.com/permissions).',
+        ],
+      },
+      {
         id: 'stats',
         title: 'Загальна статистика',
         body: [
@@ -470,7 +480,7 @@ const PRIVACY: Record<Lang, Doc> = {
         body: [
           [
             'не використовуємо cookies, рекламу, аналітику чи трекери;',
-            'не завантажуємо сторонні скрипти, шрифти чи картинки;',
+            'не завантажуємо сторонні скрипти, шрифти чи картинки (єдиний виняток — скрипт входу Google, і лише коли ви самі підключаєте Google Drive);',
             'не просимо й не зберігаємо логіни, паролі чи платіжні дані;',
             'не продаємо й не передаємо ваші дані.',
           ],
@@ -538,6 +548,14 @@ const PRIVACY: Record<Lang, Doc> = {
         ],
       },
       {
+        id: 'drive',
+        title: 'Google Drive',
+        body: [
+          'If you connect Google Drive, the site saves a copy of all your profiles and pulls, straight from your browser, to the app’s hidden folder on your Drive. It only needs the drive.appdata permission: the site can see its own file and nothing else in your Drive. The access token lives only in your browser tab, and the file never passes through our server, so we can’t see it.',
+          'Google’s side is covered by the [Google privacy policy](https://policies.google.com/privacy). You can turn sync off or delete the copy on the [Profile](#/profile) page, and revoke the site’s access in your [Google account settings](https://myaccount.google.com/permissions).',
+        ],
+      },
+      {
         id: 'stats',
         title: 'Community stats',
         body: [
@@ -566,7 +584,7 @@ const PRIVACY: Record<Lang, Doc> = {
         body: [
           [
             'no cookies, ads, analytics or trackers;',
-            'no third-party scripts, fonts or images;',
+            'no third-party scripts, fonts or images (the only exception is Google’s sign-in script, loaded only when you connect Google Drive yourself);',
             'we never ask for or store logins, passwords or payment details;',
             'we don’t sell or share your data.',
           ],

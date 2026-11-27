@@ -82,6 +82,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     const cur = () => ref.current
     const activeOf = (s: StoreState) => s.profiles.find((p) => p.id === s.activeId) ?? s.profiles[0]
+    const bury = (s: StoreState, profiles: string[], records: string[]): StoreState['tombstones'] => {
+      const t = s.tombstones ?? { profiles: [], records: [] }
+      return { profiles: [...t.profiles, ...profiles].slice(-500), records: [...t.records, ...records].slice(-20000) }
+    }
     const patch = (id: string, fn: (p: Profile) => Profile) => {
       const s = cur()
       commit({ ...s, profiles: s.profiles.map((p) => (p.id === id ? { ...fn(p), updatedAt: new Date().toISOString() } : p)) })
@@ -119,9 +123,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       addManual: (pool, rows) =>
         patch(activeOf(cur()).id, (p) => ({ ...p, records: { ...p.records, [pool]: mergeRecords(p.records[pool], rows).records } })),
-      removeRecord: (pool, uid) =>
-        patch(activeOf(cur()).id, (p) => ({ ...p, records: { ...p.records, [pool]: p.records[pool].filter((r) => r.uid !== uid) } })),
-      clearPool: (pool) => patch(activeOf(cur()).id, (p) => ({ ...p, records: { ...p.records, [pool]: [] } })),
+      removeRecord(pool, uid) {
+        commit({ ...cur(), tombstones: bury(cur(), [], [uid]) })
+        patch(activeOf(cur()).id, (p) => ({ ...p, records: { ...p.records, [pool]: p.records[pool].filter((r) => r.uid !== uid) } }))
+      },
+      clearPool(pool) {
+        const s = cur()
+        commit({ ...s, tombstones: bury(s, [], activeOf(s).records[pool].map((r) => r.uid)) })
+        patch(activeOf(cur()).id, (p) => ({ ...p, records: { ...p.records, [pool]: [] } }))
+      },
       updateProfile: (id, fields) => patch(id, (p) => ({ ...p, ...fields })),
       addProfile(name) {
         const s = cur()
@@ -133,7 +143,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const s = cur()
         const rest = s.profiles.filter((p) => p.id !== id)
         const profiles = rest.length ? rest : [newProfile('')]
-        commit({ ...s, profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
+        commit({ ...s, tombstones: bury(s, [id], []), profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
       },
       replaceAll: (s) => commit(s),
       adoptShare(shareId, snap) {

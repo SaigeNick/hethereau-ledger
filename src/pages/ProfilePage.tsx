@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { driveAvailable, removeFile, setDriveFlag, signIn, signOut } from '../lib/drive'
+import { _setDriveStatus, useDriveSync } from '../lib/driveSync'
 import { setStatsOptOut, statsOptedOut, withdraw } from '../lib/globalStats'
 import { useI18n } from '../lib/i18n'
 import { shareSig } from '../lib/autoShare'
@@ -154,6 +156,8 @@ export function ProfilePage() {
         )}
       </section>
 
+      <DriveSection />
+
       <StatsToggle />
 
       <section>
@@ -229,6 +233,81 @@ function StatsToggle() {
         />
         <span>{t('profile.statsOn')}</span>
       </label>
+    </section>
+  )
+}
+
+function DriveSection() {
+  const { t, fmtDate } = useI18n()
+  const { status, lastError, flag, syncNow } = useDriveSync()
+  const [busy, setBusy] = useState(false)
+  if (!driveAvailable()) return null
+  const on = status !== 'off'
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true)
+    try {
+      await fn()
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section id="drive">
+      <h2>{t('drive.title')}</h2>
+      <p className="muted">{t('drive.lead')}</p>
+      {on && (
+        <p className={status === 'error' ? 'bad' : 'muted'} aria-live="polite">
+          {status === 'syncing'
+            ? t('drive.syncing')
+            : status === 'error'
+              ? t('drive.error', { code: lastError })
+              : status === 'needsSignIn'
+                ? t('drive.needsSignIn')
+                : flag.lastSync
+                  ? t('drive.synced', { date: fmtDate(flag.lastSync) })
+                  : ''}
+        </p>
+      )}
+      <div className="actions">
+        {!on ? (
+          <button className="btn" disabled={busy} onClick={() => run(() => syncNow(true))}>
+            {t('drive.connect')}
+          </button>
+        ) : (
+          <>
+            <button className="btn" disabled={busy || status === 'syncing'} onClick={() => run(() => syncNow(true))}>
+              {t('drive.syncNow')}
+            </button>
+            <button
+              className="btn btn--ghost"
+              disabled={busy}
+              onClick={() => {
+                signOut()
+                setDriveFlag({ on: false })
+                _setDriveStatus('off')
+              }}
+            >
+              {t('drive.disconnect')}
+            </button>
+            <ConfirmButton
+              label={t('drive.deleteCopy')}
+              onConfirm={() =>
+                run(async () => {
+                  try {
+                    await signIn()
+                    await removeFile()
+                    signOut()
+                    setDriveFlag({ on: false })
+                    _setDriveStatus('off')
+                  } catch (e) {
+                    _setDriveStatus('error', e instanceof Error ? e.message : 'error')
+                  }
+                })
+              }
+            />
+          </>
+        )}
+      </div>
     </section>
   )
 }

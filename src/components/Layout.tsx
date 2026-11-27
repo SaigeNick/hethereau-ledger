@@ -2,12 +2,14 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { KOFI_URL, REPO_URL } from '../config'
 import { useI18n } from '../lib/i18n'
 import { useAutoShare } from '../lib/autoShare'
+import { useDriveAutoSync } from '../lib/driveSync'
 import { useStore } from '../lib/store'
 
 export function Layout() {
   const { t, lang, setLang } = useI18n()
   const { saveFailed } = useStore()
   useAutoShare()
+  useDriveAutoSync()
   return (
     <div className="app">
       <a className="skip" href="#main">

@@ -53,6 +53,8 @@ export interface StoreState {
   version: 1
   activeId: string
   profiles: Profile[]
+  /** What was deleted on this device, so a cloud sync doesn't bring it back. */
+  tombstones?: { profiles: string[]; records: string[] }
 }
 
 /** What a shared link exposes: no game UID, no share token. */
