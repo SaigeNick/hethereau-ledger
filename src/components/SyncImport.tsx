@@ -7,16 +7,18 @@ import { POOL_IDS } from '../lib/types'
 
 type Line = { ok: boolean; text: string }
 
-/** The paimon.moe-style flow: run one command, scroll history, paste here. */
+/** One command, scroll the history in the game, paste here. */
 export function SyncImport() {
-  const { t } = useI18n()
-  const { importParsed } = useStore()
+  const { t, fmtDate } = useI18n()
+  const { importParsed, active } = useStore()
   const [text, setText] = useState('')
   const [lines, setLines] = useState<Line[]>([])
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
-  const base = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`
-  const command = `irm ${base}sync.ps1 | iex`
+  const [copyBlocked, setCopyBlocked] = useState(false)
+  const host = location.host
+  // Short on purpose: easy to type when a browser refuses to copy it.
+  const command = `irm https://${host}/s | iex`
 
   async function run(value: string) {
     if (!looksLikeSync(value)) {
@@ -30,8 +32,16 @@ export function SyncImport() {
       for (const pool of POOL_IDS) {
         const records = recordsByPool[pool]
         if (!records?.length) continue
+        // If this sync starts after the newest pull already on the site, some
+        // history pages in between were not opened.
+        const before = active.records[pool]
+        const prevNewest = before.reduce((m, r) => (r.time > m ? r.time : m), '')
+        const oldestNew = records.reduce((m, r) => (r.time < m ? r.time : m), records[0].time)
         const res = importParsed({ pool, records, warnings: [] })
         out.push({ ok: true, text: t('import.result', { pool: t(`pool.${pool}` as never), added: res.added, dup: res.duplicates }) })
+        if (before.length && prevNewest && oldestNew > prevNewest) {
+          out.push({ ok: false, text: t('sync.gap', { pool: t(`pool.${pool}` as never), date: fmtDate(prevNewest.replace(' ', 'T')) }) })
+        }
       }
       setLines(out.length ? out : [{ ok: false, text: t('sync.empty') }])
       if (out.length) setText('')
@@ -71,15 +81,24 @@ export function SyncImport() {
                 try {
                   await navigator.clipboard.writeText(command)
                   setCopied(true)
+                  setCopyBlocked(false)
                   setTimeout(() => setCopied(false), 1500)
                 } catch {
-                  /* the command stays selectable */
+                  // Browsers that guard against fake "paste this command" pages refuse here.
+                  setCopyBlocked(true)
                 }
               }}
             >
               {copied ? t('profile.shareCopied') : t('profile.shareCopy')}
             </button>
           </div>
+          {copyBlocked && <p className="bad small">{t('sync.copyBlocked')}</p>}
+          <p className="muted small">
+            {t('sync.altLead')}{' '}
+            <a href={`${import.meta.env.BASE_URL}hethereau-sync.cmd`} download>
+              {t('sync.altLink')}
+            </a>
+          </p>
         </li>
         <li>{t('sync.step3')}</li>
         <li>{t('sync.step4')}</li>

@@ -2003,4 +2003,8 @@ h2.spaced {
   .ach-reward {
     grid-column: 3;
   }
+/* One click selects the whole command, for copying by hand. */
+.cmd code {
+  user-select: all;
+  -webkit-user-select: all;
 }

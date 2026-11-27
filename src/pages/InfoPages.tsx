@@ -219,6 +219,19 @@ const FAQ: Record<Lang, Faq> = {
             ],
           },
           {
+            q: 'Браузер не дає скопіювати команду. Чому?',
+            a: [
+              'Шахраї часто просять людей «вставити команду в PowerShell», тож деякі браузери, розширення й антивіруси блокують копіювання таких команд. Наша команда безпечна, а її код відкритий, проте захист цього не знає.',
+              'Виділіть команду й скопіюйте вручну, наберіть її самі (вона коротка) або скачайте запускач hethereau-sync.cmd на сторінці [Імпорт](#/import). Windows може попередити про файл з інтернету: «Докладніше» → «Однаково запустити».',
+            ],
+          },
+          {
+            q: 'Чи треба щоразу гортати всю історію?',
+            a: [
+              'Ні. Уперше — до кінця. Потім достатньо відкрити сторінки з новими крутками і ще одну, яку сайт уже бачив. Якщо між імпортами лишиться прогалина, сайт попередить і скаже, до якої дати догорнути.',
+            ],
+          },
+          {
             q: 'Мене можуть забанити?',
             a: [
               'Чесно: гарантувати не може ніхто, крім розробника. Правила NTE забороняють моди, зміну файлів гри, макроси й програми, що дають перевагу. Команда нічого з цього не робить: вона лише читає трафік, який і так приходить на ваш комп’ютер.',
@@ -349,6 +362,19 @@ const FAQ: Record<Lang, Faq> = {
             q: 'Why does it need administrator rights?',
             a: [
               'Windows only lets programs with administrator rights read network packets. The command installs nothing and changes no system settings; it simply exits when done.',
+            ],
+          },
+          {
+            q: 'My browser won’t let me copy the command. Why?',
+            a: [
+              'Scammers often ask people to “paste a command into PowerShell”, so some browsers, extensions and antivirus tools block copying such commands. Our command is safe and its code is open, but the protection can’t tell.',
+              'Select the command and copy it by hand, type it yourself (it’s short), or download the hethereau-sync.cmd launcher on the [Import](#/import) page. Windows may warn about a file from the internet: More info → Run anyway.',
+            ],
+          },
+          {
+            q: 'Do I have to scroll the whole history every time?',
+            a: [
+              'No. The first time, scroll to the end. After that, open the pages with new pulls plus one the site has already seen. If a gap is left between imports, the site warns you and says how far back to go.',
             ],
           },
           {
