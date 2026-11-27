@@ -13,7 +13,7 @@
 
 $ErrorActionPreference = 'Stop'
 $HlVersion = '1.0.0'
-$HlSite = ''  # set to the site URL once it is published
+$HlSite = 'https://hethereau-ledger.pages.dev/'
 
 function Write-Ok($text) { Write-Host $text -ForegroundColor Green }
 function Write-Warn($text) { Write-Host $text -ForegroundColor Yellow }
