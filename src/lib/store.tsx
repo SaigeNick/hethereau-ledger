@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { mergeRecords, type ParsedExport } from './importer'
-import { emptyRecords, type PoolId, type Profile, type PullRecord, type StoreState } from './types'
+import { emptyRecords, POOL_IDS, type PoolId, type Profile, type PullRecord, type SharedSnapshot, type StoreState } from './types'
 
 const KEY = 'hethereau-ledger.v1'
+let askedPersist = false
 
 export function newId(len = 8) {
   const a = new Uint8Array(len)
@@ -49,6 +50,8 @@ interface StoreApi {
   switchProfile: (id: string) => void
   deleteProfile: (id: string) => void
   replaceAll: (s: StoreState) => void
+  /** Saves a shared profile on this device, or refreshes the copy made earlier. */
+  adoptShare: (shareId: string, snap: SharedSnapshot) => string
 }
 
 const Ctx = createContext<StoreApi | null>(null)
@@ -62,6 +65,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(KEY, JSON.stringify(state))
       setSaveFailed(false)
+      // Ask the browser not to evict this site's storage once there is history worth keeping.
+      if (!askedPersist && state.profiles.some((p) => POOL_IDS.some((id) => p.records[id].length)) && navigator.storage?.persist) {
+        askedPersist = true
+        navigator.storage.persisted?.().then((done) => done || navigator.storage.persist()).catch(() => {})
+      }
     } catch {
       setSaveFailed(true)
     }
@@ -128,6 +136,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit({ ...s, profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
       },
       replaceAll: (s) => commit(s),
+      adoptShare(shareId, snap) {
+        const s = cur()
+        const existing = s.profiles.find((p) => p.source === shareId)
+        const records = { ...emptyRecords(), ...snap.records }
+        const now = new Date().toISOString()
+        if (existing) {
+          const updated = { ...existing, name: snap.name || existing.name, region: snap.region, records, updatedAt: now }
+          commit({ ...s, activeId: existing.id, profiles: s.profiles.map((p) => (p.id === existing.id ? updated : p)) })
+          return existing.id
+        }
+        const p: Profile = { ...newProfile(snap.name), region: snap.region, records, source: shareId, updatedAt: now }
+        // Replace the untouched starter profile instead of keeping an empty one around.
+        const keep = s.profiles.filter((x) => x.name || x.gameUid || POOL_IDS.some((id) => x.records[id].length))
+        commit({ ...s, activeId: p.id, profiles: [...keep, p] })
+        return p.id
+      },
     }
   }, [state, saveFailed])
 

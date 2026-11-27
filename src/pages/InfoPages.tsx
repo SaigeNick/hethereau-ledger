@@ -172,6 +172,12 @@ const FAQ: Record<Lang, Faq> = {
             ],
           },
           {
+            q: 'Як дивитися свої крутки з телефона?',
+            a: [
+              'Створіть посилання на сторінці [Профіль](#/profile) на ПК і відскануйте QR-код телефоном. Натисніть «Зберегти на цьому пристрої» — крутки з’являться на телефоні. Посилання оновлюється саме після кожного імпорту на ПК, а на телефоні достатньо відкрити його знову й натиснути «Оновити копію».',
+            ],
+          },
+          {
             q: 'Я очистив браузер і не можу видалити своє посилання. Що робити?',
             a: ['Напишіть нам ({contact}) і вкажіть посилання — ми видалимо його вручну.'],
           },
@@ -295,6 +301,12 @@ const FAQ: Record<Lang, Faq> = {
             a: [
               'Anyone who has the link. It contains your profile name, region and pull history. Your game UID is not included.',
               'You can update or delete the link on the [Profile](#/profile) page in the same browser where you created it.',
+            ],
+          },
+          {
+            q: 'How do I see my pulls on my phone?',
+            a: [
+              'Create a link on the [Profile](#/profile) page on your PC and scan the QR code with your phone. Press “Save on this device” and your pulls appear on the phone. The link updates itself after every import on the PC; on the phone just open it again and press “Update the copy”.',
             ],
           },
           {
@@ -425,7 +437,7 @@ const PRIVACY: Record<Lang, Doc> = {
         id: 'share',
         title: 'Посилання на профіль',
         body: [
-          'Якщо ви натиснете «Створити посилання», на сервер буде надіслано назву профілю, регіон та історію круток. UID гри й службові ключі не надсилаються. Дані зберігаються у сховищі Cloudflare, доки ви не видалите посилання, і доступні будь-кому, хто має посилання.',
+          'Якщо ви натиснете «Створити посилання», на сервер буде надіслано назву профілю, регіон та історію круток, а після кожного нового імпорту посилання оновлюється автоматично. UID гри й службові ключі не надсилаються. Дані зберігаються у сховищі Cloudflare, доки ви не видалите посилання, і доступні будь-кому, хто має посилання.',
           'Підстава: ваша згода, яку ви даєте, створюючи посилання. Ви можете відкликати її будь-коли, видаливши посилання на сторінці [Профіль](#/profile) або написавши нам.',
         ],
       },
@@ -521,7 +533,7 @@ const PRIVACY: Record<Lang, Doc> = {
         id: 'share',
         title: 'Profile links',
         body: [
-          'If you press “Create link”, your profile name, region and pull history are sent to the server. Your game UID and private keys are not. The data is kept in Cloudflare storage until you delete the link, and anyone with the link can see it.',
+          'If you press “Create link”, your profile name, region and pull history are sent to the server, and the link updates itself after each new import. Your game UID and private keys are not. The data is kept in Cloudflare storage until you delete the link, and anyone with the link can see it.',
           'Legal basis: your consent, given by creating the link. You can withdraw it at any time by deleting the link on the [Profile](#/profile) page or by contacting us.',
         ],
       },

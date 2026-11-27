@@ -1774,3 +1774,28 @@ h2.spaced {
 .global-foot {
   font-size: 0.8rem;
 }
+
+/* QR and copying a shared profile */
+.share-qr {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.share-qr p {
+  max-width: 40ch;
+  margin: 0;
+}
+.qr {
+  border-radius: 10px;
+  background: #fff;
+  image-rendering: pixelated;
+}
+.adopt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-top: 12px;
+}

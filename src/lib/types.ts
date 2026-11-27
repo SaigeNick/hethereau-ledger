@@ -44,7 +44,9 @@ export interface Profile {
   region?: string
   records: PoolRecords
   updatedAt: string
-  share?: { id: string; token: string; updatedAt: string }
+  share?: { id: string; token: string; updatedAt: string; sig?: string }
+  /** Share link this profile was copied from (a read-only copy on another device). */
+  source?: string
 }
 
 export interface StoreState {

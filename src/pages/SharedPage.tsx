@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { BannerBody, OverviewBody } from '../components/PoolViews'
 import { useI18n } from '../lib/i18n'
 import { fetchShare } from '../lib/share'
+import { useStore } from '../lib/store'
 import { POOL_IDS, type PoolId, type SharedSnapshot } from '../lib/types'
 
 const cache = new Map<string, SharedSnapshot | null>()
@@ -12,6 +13,10 @@ export function SharedPage() {
   const { t, fmtDate } = useI18n()
   const [snap, setSnap] = useState<SharedSnapshot | null | undefined>(cache.get(shareId))
   const [failed, setFailed] = useState(false)
+  const store = useStore()
+  const navigate = useNavigate()
+  const mine = store.state.profiles.some((p) => p.share?.id === shareId)
+  const copy = store.state.profiles.find((p) => p.source === shareId)
 
   useEffect(() => {
     if (cache.has(shareId)) return
@@ -33,6 +38,20 @@ export function SharedPage() {
       <p className="muted">
         {t('shared.updated', { date: fmtDate(snap.updatedAt) })} · <Link to="/import">{t('shared.own')}</Link>
       </p>
+      {!mine && (
+        <div className="adopt">
+          <button
+            className="btn"
+            onClick={() => {
+              store.adoptShare(shareId, snap)
+              navigate('/')
+            }}
+          >
+            {copy ? t('shared.adoptUpdate') : t('shared.adopt')}
+          </button>
+          {!copy && <span className="muted">{t('shared.adoptLead')}</span>}
+        </div>
+      )}
     </div>
   )
 

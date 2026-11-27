@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { setStatsOptOut, statsOptedOut, withdraw } from '../lib/globalStats'
 import { useI18n } from '../lib/i18n'
+import { shareSig } from '../lib/autoShare'
+import { QrCode } from '../components/QrCode'
 import { createShare, deleteShare, shareUrl, ShareUnavailable, updateShare } from '../lib/share'
 import { isStoreState, useStore } from '../lib/store'
 import { POOL_IDS } from '../lib/types'
@@ -41,11 +43,11 @@ export function ProfilePage() {
     try {
       if (kind === 'create') {
         const res = await createShare(active)
-        store.updateProfile(active.id, { share: { ...res, updatedAt: new Date().toISOString() } })
+        store.updateProfile(active.id, { share: { ...res, sig: shareSig(active), updatedAt: new Date().toISOString() } })
         setMsg({ ok: true, text: t('profile.shareDone') })
       } else if (kind === 'update' && active.share) {
         await updateShare(active.share.id, active.share.token, active)
-        store.updateProfile(active.id, { share: { ...active.share, updatedAt: new Date().toISOString() } })
+        store.updateProfile(active.id, { share: { ...active.share, sig: shareSig(active), updatedAt: new Date().toISOString() } })
         setMsg({ ok: true, text: t('profile.shareDone') })
       } else if (kind === 'delete' && active.share) {
         await deleteShare(active.share.id, active.share.token)
@@ -122,6 +124,13 @@ export function ProfilePage() {
             </button>
           </div>
         )}
+        {url && (
+          <div className="share-qr">
+            <QrCode text={url} label={t('profile.qr')} />
+            <p className="muted">{t('profile.qrLead')}</p>
+          </div>
+        )}
+        {active.source && !active.share && <p className="muted">{t('profile.isCopy')}</p>}
         <div className="actions">
           {active.share ? (
             <>

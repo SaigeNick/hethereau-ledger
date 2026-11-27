@@ -1,13 +1,14 @@
-import { json, overLimit, type Env } from '../share/_shared'
+import { json, sha256, type Env } from '../share/_shared'
 
 /**
  * Anonymous community stats for the limited character board.
  * Each player is one KV key holding only numbers in its metadata:
  * total pulls and the pity of each S. No names, UIDs or IPs.
- * Entries expire 180 days after the last update.
+ * Entries expire 180 days after the last update. The aggregate is rebuilt at most
+ * every 15 minutes (one list + one write), so each player update costs one KV write.
  */
 const TTL = 180 * 86_400
-const AGG_MAX_AGE = 600_000
+const AGG_MAX_AGE = 900_000
 const MAX_S = 200
 
 interface Meta {
@@ -25,11 +26,28 @@ export interface Aggregate {
   updatedAt: number
 }
 
+/**
+ * Best-effort per-isolate limit so stats writes don't spend the KV write quota
+ * on rate-limit counters. Each request already costs at most one KV write.
+ */
+const hits = new Map<string, { hour: number; n: number }>()
+async function tooMany(request: Request, max = 30) {
+  const ip = await sha256(request.headers.get('cf-connecting-ip') ?? 'unknown')
+  const hour = Math.floor(Date.now() / 3_600_000)
+  const h = hits.get(ip)
+  if (!h || h.hour !== hour) {
+    if (hits.size > 5000) hits.clear()
+    hits.set(ip, { hour, n: 1 })
+    return false
+  }
+  return ++h.n > max
+}
+
 /** Preview deployments get their own keys so testing doesn't skew real stats. */
 const prefix = (request: Request) => (new URL(request.url).hostname === 'hethereau-ledger.pages.dev' ? '' : 'pv:')
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  if (await overLimit(env, request, 30, 'st')) return json({ error: 'rate_limited' }, 429)
+  if (await tooMany(request)) return json({ error: 'rate_limited' }, 429)
   let body: any
   try {
     const text = await request.text()
@@ -51,17 +69,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (sum > pulls) return json({ error: 'bad_input' }, 400)
   const meta: Meta = { p: pulls, s: pities }
   await env.SHARES.put(`${prefix(request)}st:${key}`, '1', { metadata: meta, expirationTtl: TTL })
-  await env.SHARES.delete(`${prefix(request)}stats:agg`)
   return new Response(null, { status: 204 })
 }
 
 /** Removes one player's numbers (used when they turn community stats off). */
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
-  if (await overLimit(env, request, 30, 'st')) return json({ error: 'rate_limited' }, 429)
+  if (await tooMany(request)) return json({ error: 'rate_limited' }, 429)
   const key = new URL(request.url).searchParams.get('key') ?? ''
   if (!/^[0-9a-f]{64}$/.test(key)) return json({ error: 'bad_input' }, 400)
   await env.SHARES.delete(`${prefix(request)}st:${key}`)
-  await env.SHARES.delete(`${prefix(request)}stats:agg`)
   return new Response(null, { status: 204 })
 }
 
