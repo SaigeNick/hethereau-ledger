@@ -24,7 +24,7 @@ export function resolve(r: PullRecord): PullRecord {
   if (r.manual || !r.rewardId) return r
   const e = lookup(r.rewardId)
   if (!e) return { ...r, name: r.name && r.name !== r.rewardId ? r.name : `#${r.rewardId}` }
-  return { ...r, name: e.name, rank: e.rank, rewardType: e.type === 'cosmetic' ? 'item' : e.type }
+  return { ...r, name: e.name, rank: e.rank, rewardType: e.type }
 }
 
 const cache = new WeakMap<PullRecord[], PullRecord[]>()

@@ -1,4 +1,4 @@
-import { RULES } from './banners'
+import { isBonus, RULES } from './banners'
 import { sortChrono } from './importer'
 import type { PoolId, PullRecord } from './types'
 
@@ -15,6 +15,10 @@ export interface PoolStats {
   sinceLastA: number
   sDrops: TopDrop[]
   aCount: number
+  /** Every-10 A rewards and other bonus rows. */
+  bonusCount: number
+  /** Outfits, gliders and liveries that dropped from rolls. */
+  rareDrops: PullRecord[]
   avgPity: number | null
   /** Your S rate divided by the typical rate; above 1 means luckier. */
   luck: number | null
@@ -29,6 +33,8 @@ export function computeStats(pool: PoolId, input: PullRecord[]): PoolStats {
   let sinceA = 0
   let totalPulls = 0
   let aCount = 0
+  let bonusCount = 0
+  const rareDrops: PullRecord[] = []
   const sDrops: TopDrop[] = []
 
   for (const r of records) {
@@ -38,12 +44,17 @@ export function computeStats(pool: PoolId, input: PullRecord[]): PoolStats {
       sinceA++
       totalPulls++
     }
+    if (isBonus(r)) {
+      bonusCount++
+      continue
+    }
+    if (rules.system === 'monopoly' && (r.rewardType === 'cosmetic' || r.rewardType === 'vehicle')) rareDrops.push(r)
     if (rules.isTopDrop(r)) {
       // A bonus row (Chase Reward) belongs to the roll before it.
       sDrops.push({ record: r, pity: Math.max(counter, 1) })
       counter = 0
       sinceA = 0
-    } else if (r.rank === 'A' && (r.rewardType === 'character' || r.rewardType === 'arc')) {
+    } else if (pull && r.rank === 'A' && (r.rewardType === 'character' || r.rewardType === 'arc')) {
       aCount++
       sinceA = 0
     }
@@ -64,6 +75,8 @@ export function computeStats(pool: PoolId, input: PullRecord[]): PoolStats {
     sinceLastA: sinceA,
     sDrops,
     aCount,
+    bonusCount,
+    rareDrops,
     avgPity,
     luck,
     firstTime: records[0]?.time,

@@ -21,6 +21,7 @@ export function Layout() {
             {t('nav.overview')}
           </NavLink>
           <NavLink to="/import">{t('nav.import')}</NavLink>
+          <NavLink to="/guide">{t('nav.guide')}</NavLink>
           <NavLink to="/profile">{t('nav.profile')}</NavLink>
         </nav>
         <button className="lang" onClick={() => setLang(lang === 'uk' ? 'en' : 'uk')} lang={lang === 'uk' ? 'en' : 'uk'}>

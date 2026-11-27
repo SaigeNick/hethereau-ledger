@@ -55,8 +55,11 @@ function StatRow({ s }: { s: PoolStats }) {
       )}
       {rules.system === 'monopoly' && (
         <div>
-          <dt>{t('stat.sinceA')}</dt>
-          <dd>{s.sinceLastA}</dd>
+          <dt>{t('stat.bonus')}</dt>
+          <dd>
+            {s.bonusCount}
+            <small>{t('stat.bonusNote')}</small>
+          </dd>
         </div>
       )}
     </dl>
@@ -189,6 +192,22 @@ export function BannerBody({
           </ol>
         )}
       </section>
+
+      {s.rareDrops.length > 0 && (
+        <section>
+          <h2>{t('banner.rare')}</h2>
+          <p className="muted">{t('banner.rareNote')}</p>
+          <ol className="drops">
+            {[...s.rareDrops].reverse().map((r) => (
+              <li key={r.uid}>
+                <Portrait id={r.rewardId} name={r.name} rank={r.rank} />
+                <span className="drop-name">{r.name}</span>
+                <span className="drop-date muted">{fmtDate(r.time)}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {rules.hardPity && s.sDrops.length > 0 && (
         <section>

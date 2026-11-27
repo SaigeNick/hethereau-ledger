@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { I18nProvider } from './lib/i18n'
 import { StoreProvider } from './lib/store'
 import { BannerPage } from './pages/BannerPage'
+import { GuidePage } from './pages/GuidePage'
 import { ImportPage } from './pages/ImportPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -28,6 +29,7 @@ export default function App() {
               <Route index element={<OverviewPage />} />
               <Route path="pool/:poolId" element={<BannerPage />} />
               <Route path="import" element={<ImportPage />} />
+              <Route path="guide" element={<GuidePage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="u/:shareId" element={<SharedPage />} />
               <Route path="u/:shareId/pool/:poolId" element={<SharedPage />} />

@@ -18,7 +18,7 @@ const TABLES = [
   { path: 'DataTable/Fork/DT_ForkItemData.json', type: 'arc', icon: 'ItemIcon' },
   { path: 'DataTable/Inventory/DT_ItemConfig.json', type: 'item' },
   { path: 'DataTable/Inventory/DT_CapitalItemConfig.json', type: 'item' },
-  { path: 'DataTable/Vehicle/DT_VehicleItemData.json', type: 'item' },
+  { path: 'DataTable/Vehicle/DT_VehicleItemData.json', type: 'vehicle' },
   { path: 'DataTable/Character/Appearance/DT_AppearanceData.json', type: 'cosmetic' },
 ]
 
@@ -95,5 +95,7 @@ await mkdir('src/data', { recursive: true })
 const text = JSON.stringify(out) + '\n'
 const before = existsSync('src/data/rewards.json') ? await readFile('src/data/rewards.json', 'utf8') : ''
 await writeFile('src/data/rewards.json', text)
+// Vehicle liveries and gliders also live in the item tables.
+for (const [k, v] of Object.entries(rewards)) if (v[2] === 'item' && /^(vehicle|glider|livery)/i.test(k)) v[2] = 'vehicle'
 const counts = Object.values(rewards).reduce((a, r) => ((a[r[2]] = (a[r[2]] ?? 0) + 1), a), {})
 console.log(`rewards: ${sortedKeys.length}`, counts, `icons: ${withIcon.size}`, before === text ? '(no change)' : '(updated)')

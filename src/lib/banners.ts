@@ -2,6 +2,8 @@ import type { PoolId, PullRecord } from './types'
 
 /**
  * Gacha rules as published by the community (Prydwen, GameWith) in 2026.
+ * Bonus rows (every-10 A reward, Chase Reward) appear in history but never
+ * count as pulls and never touch pity.
  * Character boards: 0.99% per roll, board changes after 70 rolls (~19.6%),
  * the 90th roll guarantees the featured S. Arc box: S guaranteed within 60 pulls.
  */
@@ -23,7 +25,9 @@ export interface PoolRules {
 }
 
 const monopolyPull = (r: PullRecord) => r.kind === 'dice' || r.kind === 'manual'
-const sCharacter = (r: PullRecord) => r.rank === 'S' && r.rewardType === 'character'
+/** Bonus rows: the A reward every 10 rolls (Points Gift) and the Chase Reward. Never pulls, never pity. */
+export const isBonus = (r: PullRecord) => r.kind === 'points_gift' || r.kind === 'chase_reward'
+const sCharacter = (r: PullRecord) => monopolyPull(r) && r.rank === 'S' && r.rewardType === 'character'
 
 export const RULES: Record<PoolId, PoolRules> = {
   Lottery_LimitedCharacter: {

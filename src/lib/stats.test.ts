@@ -47,9 +47,24 @@ describe('pity', () => {
     expect(s.totalPulls).toBe(11)
   })
 
-  it('gives a chase reward S the pity of the roll before it', () => {
-    const rows: PullRecord[] = [rec({ time: '2026-06-10 10:00:01' }), rec({ time: '2026-06-10 10:00:02', kind: 'chase_reward', rewardType: 'character', rank: 'S' })]
-    expect(computeStats('Lottery_LimitedCharacter', rows).sDrops[0].pity).toBe(1)
+  it('never lets a bonus row reset pity or count as a pull', () => {
+    const rows: PullRecord[] = [
+      rec({ time: '2026-06-10 10:00:01' }),
+      rec({ time: '2026-06-10 10:00:02', kind: 'points_gift', rewardType: 'character', rank: 'S' }),
+      rec({ time: '2026-06-10 10:00:03', kind: 'chase_reward', rewardType: 'character', rank: 'S' }),
+      rec({ time: '2026-06-10 10:00:04', kind: 'points_gift', rewardType: 'arc', rank: 'A' }),
+    ]
+    const s = computeStats('Lottery_LimitedCharacter', rows)
+    expect(s.sDrops).toHaveLength(0)
+    expect(s.currentPity).toBe(1)
+    expect(s.totalPulls).toBe(1)
+    expect(s.bonusCount).toBe(3)
+    expect(s.aCount).toBe(0)
+  })
+
+  it('lists outfits that drop from rolls as rare drops', () => {
+    const rows = [rec({ time: '2026-06-10 10:00:01', rewardType: 'cosmetic', rank: 'A', name: 'Priceless Orchid' })]
+    expect(computeStats('Lottery_LimitedCharacter', rows).rareDrops).toHaveLength(1)
   })
 
   it('does not reset character pity on an S item', () => {
@@ -72,7 +87,7 @@ describe('import', () => {
     const first = mergeRecords([], files[0].records)
     const again = mergeRecords(first.records, files[0].records)
     expect(again.added).toBe(0)
-    expect(again.records.length).toBe(310)
+    expect(again.records.length).toBe(341)
     const s = computeStats('Lottery_LimitedCharacter', first.records)
     expect(s.totalPulls).toBe(310)
     expect(s.sDrops.every((d) => d.pity <= 90)).toBe(true)

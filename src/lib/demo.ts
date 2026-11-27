@@ -89,6 +89,10 @@ function monopoly(pool: PoolId, groups: number, seed: number, sPool: string[][])
       }
       rows.push({ roll_result: roll, result_type: 'dice', reward_type: type, reward_id: reward[0], reward_name: reward[1], reward_rank: rank, quantity: 1 })
     }
+    // The guaranteed A every 10 rolls arrives as a bonus row, not a roll.
+    const bonus = rand() < 0.2 ? A_CHARS[Math.floor(rand() * A_CHARS.length)] : ['fork_wuhuakuang', 'The Forgotten']
+    rows.push({ roll_result: 0, result_type: 'points_gift', reward_type: rand() < 0.2 ? 'character' : 'arc', reward_id: bonus[0], reward_name: bonus[1], reward_rank: 'A', quantity: 1 })
+    if (pool === 'Lottery_LimitedCharacter' && g === 17) rows[3] = { roll_result: 4, result_type: 'dice', reward_type: 'item', reward_id: 'Fashion_1052_1', reward_name: 'Outfit', reward_rank: 'S', quantity: 1 }
     rows.reverse().forEach((r, ord) =>
       records.push({ uid: `demo-${pool}-${g}-${ord}`, pool_group_id: pool, timestamp: time, timestamp_group_ordinal: ord, ...(r as object) }),
     )
