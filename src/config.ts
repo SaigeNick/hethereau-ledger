@@ -6,3 +6,6 @@ export const NPCAP_URL = 'https://npcap.com/'
 
 /** Source code and contact for players and rights holders. */
 export const REPO_URL = 'https://github.com/SaigeNick/hethereau-ledger'
+
+/** Optional contact email for privacy and takedown requests. Empty = GitHub Issues. */
+export const CONTACT_EMAIL = ''

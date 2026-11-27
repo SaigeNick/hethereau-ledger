@@ -1471,3 +1471,88 @@ h2.spaced {
     padding-left: 0;
   }
 }
+
+/* FAQ and legal pages */
+.footer-text {
+  display: grid;
+  gap: 8px;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.footer-links a {
+  color: var(--muted);
+}
+.footer-links a:hover {
+  color: var(--ink);
+}
+.legal ul {
+  max-width: 68ch;
+  padding-left: 20px;
+}
+.legal li + li {
+  margin-top: 4px;
+}
+.faq {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-top: 10px;
+  max-width: 68ch;
+}
+.faq summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: '+';
+  color: var(--pink);
+  font-weight: 700;
+}
+.faq[open] summary::after {
+  content: '\2212';
+}
+.faq[open] {
+  border-color: var(--pink);
+}
+.faq summary:focus-visible {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+.faq > :not(summary) {
+  margin: 0 16px 12px;
+}
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 48px;
+}
+.legal-nav a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.88rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.legal-nav a.active,
+.legal-nav a:hover {
+  border-color: var(--pink);
+}
+@media (max-width: 600px) {
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -7,6 +7,7 @@ const uk = {
   'nav.import': 'Імпорт',
   'nav.guide': 'Як працює гача',
   'nav.profile': 'Профіль',
+  'nav.faq': 'FAQ',
   'lang.switch': 'English',
 
   'pool.Lottery_LimitedCharacter': 'Лімітована дошка',
@@ -181,8 +182,11 @@ const uk = {
   'shared.updated': 'Оновлено {date}',
   'shared.own': 'Завести свій трекер',
 
-  'footer.fan': 'Фан-сайт. Не пов’язаний з Hotta Studio чи Perfect World Games. Назви та зображення з гри належать їхнім власникам.',
+  'footer.fan': 'Неофіційний фан-сайт. Не пов’язаний з Hotta Studio чи Perfect World Games і не схвалений ними. Назви та зображення з гри належать їхнім власникам.',
   'footer.contact': 'Зв’язок і код на GitHub',
+  'footer.faq': 'Питання та відповіді',
+  'footer.privacy': 'Конфіденційність',
+  'footer.terms': 'Умови використання',
   'footer.kofi': 'Підтримати на Ko-fi',
   'footer.kofiSoon': 'Сторінка Ko-fi скоро з’явиться',
   'rank.?': 'невідомо',
@@ -195,6 +199,7 @@ const en: Record<Key, string> = {
   'nav.import': 'Import',
   'nav.guide': 'How it works',
   'nav.profile': 'Profile',
+  'nav.faq': 'FAQ',
   'lang.switch': 'Українська',
 
   'pool.Lottery_LimitedCharacter': 'Limited board',
@@ -369,8 +374,11 @@ const en: Record<Key, string> = {
   'shared.updated': 'Updated {date}',
   'shared.own': 'Start your own tracker',
 
-  'footer.fan': 'Fan site. Not affiliated with Hotta Studio or Perfect World Games. Game names and images belong to their owners.',
+  'footer.fan': 'Unofficial fan site. Not affiliated with or endorsed by Hotta Studio or Perfect World Games. Game names and images belong to their owners.',
   'footer.contact': 'Contact and source on GitHub',
+  'footer.faq': 'FAQ',
+  'footer.privacy': 'Privacy',
+  'footer.terms': 'Terms of use',
   'footer.kofi': 'Support on Ko-fi',
   'footer.kofiSoon': 'Ko-fi page coming soon',
   'rank.?': 'unknown',

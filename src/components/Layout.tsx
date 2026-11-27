@@ -22,6 +22,7 @@ export function Layout() {
           </NavLink>
           <NavLink to="/import">{t('nav.import')}</NavLink>
           <NavLink to="/guide">{t('nav.guide')}</NavLink>
+          <NavLink to="/faq">{t('nav.faq')}</NavLink>
           <NavLink to="/profile">{t('nav.profile')}</NavLink>
         </nav>
         <button className="lang" onClick={() => setLang(lang === 'uk' ? 'en' : 'uk')} lang={lang === 'uk' ? 'en' : 'uk'}>
@@ -41,12 +42,17 @@ export function Footer() {
   const { t } = useI18n()
   return (
     <footer className="footer">
-      <p>
-        {t('footer.fan')}{' '}
-        <a href={`${REPO_URL}/issues`} target="_blank" rel="noreferrer">
-          {t('footer.contact')}
-        </a>
-      </p>
+      <div className="footer-text">
+        <p>{t('footer.fan')}</p>
+        <p className="footer-links">
+          <NavLink to="/faq">{t('footer.faq')}</NavLink>
+          <NavLink to="/privacy">{t('footer.privacy')}</NavLink>
+          <NavLink to="/terms">{t('footer.terms')}</NavLink>
+          <a href={`${REPO_URL}/issues`} target="_blank" rel="noreferrer">
+            {t('footer.contact')}
+          </a>
+        </p>
+      </div>
       {KOFI_URL ? (
         <a className="kofi" href={KOFI_URL} target="_blank" rel="noreferrer">
           {t('footer.kofi')}

@@ -6,6 +6,7 @@ import { StoreProvider } from './lib/store'
 import { BannerPage } from './pages/BannerPage'
 import { GuidePage } from './pages/GuidePage'
 import { ImportPage } from './pages/ImportPage'
+import { FaqPage, PrivacyPage, TermsPage } from './pages/InfoPages'
 import { DemoPage, OverviewPage } from './pages/OverviewPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SharedPage } from './pages/SharedPage'
@@ -30,6 +31,9 @@ export default function App() {
               <Route path="pool/:poolId" element={<BannerPage />} />
               <Route path="import" element={<ImportPage />} />
               <Route path="guide" element={<GuidePage />} />
+              <Route path="faq" element={<FaqPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
+              <Route path="terms" element={<TermsPage />} />
               <Route path="demo" element={<DemoPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="u/:shareId" element={<SharedPage />} />
