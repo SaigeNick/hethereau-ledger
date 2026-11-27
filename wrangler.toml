@@ -1,0 +1,10 @@
+# Cloudflare Pages project config. Create the KV namespace once:
+#   npx wrangler kv namespace create SHARES
+# then paste its id below.
+name = "hethereau-ledger"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-11-01"
+
+[[kv_namespaces]]
+binding = "SHARES"
+id = "PASTE_KV_NAMESPACE_ID_HERE"

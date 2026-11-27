@@ -1,0 +1,5 @@
+/** Fill in once the Ko-fi page exists, e.g. "https://ko-fi.com/yourname". */
+export const KOFI_URL = ''
+
+export const EXPORTER_RELEASES = 'https://github.com/Golumpa/nte-exporter/releases'
+export const NPCAP_URL = 'https://npcap.com/'
