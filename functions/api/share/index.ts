@@ -1,7 +1,8 @@
-import { json, randomId, readSnapshot, sha256, type Env, type Stored } from './_shared'
+import { json, overLimit, randomId, readSnapshot, sha256, type Env, type Stored } from './_shared'
 
 // POST /api/share — store a snapshot, return its id and an edit token.
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  if (await overLimit(env, request)) return json({ error: 'rate_limited' }, 429)
   const snap = await readSnapshot(request)
   if ('error' in snap) return json({ error: snap.error }, 400)
   const id = randomId(8)

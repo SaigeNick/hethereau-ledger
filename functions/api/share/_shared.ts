@@ -10,6 +10,56 @@ export interface Stored {
 }
 
 export const MAX_BYTES = 1_000_000
+const POOLS = ['Lottery_LimitedCharacter', 'Lottery_Permanent', 'Arc_MiracleBox', 'Gashapon_MysteryBox']
+const MAX_ROWS = 20_000
+
+function str(v: unknown, max: number) {
+  return typeof v === 'string' ? v.slice(0, max) : ''
+}
+
+/** Keeps only known fields with sane types and lengths; drops everything else. */
+function cleanRecords(input: unknown) {
+  const out: Record<string, unknown[]> = {}
+  for (const pool of POOLS) {
+    const rows = (input as Record<string, unknown>)?.[pool]
+    if (!Array.isArray(rows)) {
+      out[pool] = []
+      continue
+    }
+    out[pool] = rows.slice(0, MAX_ROWS).flatMap((r: any) => {
+      if (!r || typeof r !== 'object') return []
+      return [
+        {
+          uid: str(r.uid, 96),
+          pool,
+          time: str(r.time, 32),
+          ord: Number.isFinite(r.ord) ? Math.trunc(r.ord) : 0,
+          kind: str(r.kind, 24),
+          rewardType: str(r.rewardType, 24),
+          rewardId: str(r.rewardId, 96),
+          name: str(r.name, 96),
+          rank: ['S', 'A', 'B', 'C'].includes(r.rank) ? r.rank : '?',
+          qty: Number.isFinite(r.qty) ? Math.trunc(r.qty) : undefined,
+          roll: Number.isFinite(r.roll) ? Math.trunc(r.roll) : undefined,
+          manual: r.manual === true ? true : undefined,
+          banner: r.banner ? str(r.banner, 64) : undefined,
+        },
+      ]
+    })
+  }
+  return out
+}
+
+/** Simple per-IP limit on writes, so nobody can flood storage. */
+export async function overLimit(env: Env, request: Request, max = 20) {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
+  const hour = Math.floor(Date.now() / 3_600_000)
+  const key = `rl:${await sha256(ip)}:${hour}`
+  const count = Number((await env.SHARES.get(key)) ?? '0')
+  if (count >= max) return true
+  await env.SHARES.put(key, String(count + 1), { expirationTtl: 3700 })
+  return false
+}
 
 export function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -45,7 +95,7 @@ export async function readSnapshot(request: Request) {
       v: 1,
       name: String(body.name ?? '').slice(0, 40),
       region: typeof body.region === 'string' ? body.region.slice(0, 8) : undefined,
-      records: body.records,
+      records: cleanRecords(body.records),
       updatedAt: new Date().toISOString(),
     },
   }

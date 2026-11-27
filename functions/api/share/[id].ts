@@ -1,4 +1,4 @@
-import { json, readSnapshot, sha256, type Env, type Stored } from './_shared'
+import { json, overLimit, readSnapshot, sha256, type Env, type Stored } from './_shared'
 
 async function load(env: Env, id: string) {
   if (!/^[a-z2-9]{8}$/.test(id)) return null
@@ -24,6 +24,7 @@ export const onRequestPut: PagesFunction<Env> = async ({ params, env, request })
   const stored = await load(env, id)
   if (!stored) return json({ error: 'not_found' }, 404)
   if (!(await authorized(request, stored))) return json({ error: 'forbidden' }, 403)
+  if (await overLimit(env, request, 60)) return json({ error: 'rate_limited' }, 429)
   const snap = await readSnapshot(request)
   if ('error' in snap) return json({ error: snap.error }, 400)
   await env.SHARES.put(`p:${id}`, JSON.stringify({ ...stored, data: snap.data, updatedAt: snap.data.updatedAt }))

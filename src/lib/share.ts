@@ -1,4 +1,4 @@
-import type { Profile, SharedSnapshot } from './types'
+import { emptyRecords, POOL_IDS, type Profile, type SharedSnapshot } from './types'
 
 /** Talks to the Cloudflare Pages Function in /functions/api/share. */
 const API = '/api/share'
@@ -42,7 +42,14 @@ export async function fetchShare(id: string): Promise<SharedSnapshot | null> {
   if (res.status === 404) return null
   const type = res.headers.get('content-type') ?? ''
   if (!res.ok || !type.includes('application/json')) throw new ShareUnavailable()
-  return res.json()
+  const data = await res.json()
+  // Never trust the shape of what comes back: rebuild the parts we render.
+  const records = emptyRecords()
+  for (const pool of POOL_IDS) {
+    const rows = data?.records?.[pool]
+    if (Array.isArray(rows)) records[pool] = rows.filter((r: unknown) => r && typeof r === 'object' && typeof (r as { uid?: unknown }).uid === 'string')
+  }
+  return { v: 1, name: String(data?.name ?? '').slice(0, 40), region: typeof data?.region === 'string' ? data.region : undefined, records, updatedAt: String(data?.updatedAt ?? '') }
 }
 
 export function shareUrl(id: string) {
