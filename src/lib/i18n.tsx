@@ -163,6 +163,7 @@ const uk = {
   'shared.own': 'Завести свій трекер',
 
   'footer.fan': 'Фан-сайт. Не пов’язаний з Hotta Studio чи Perfect World Games. Назви та зображення з гри належать їхнім власникам.',
+  'footer.contact': 'Зв’язок і код на GitHub',
   'footer.kofi': 'Підтримати на Ko-fi',
   'footer.kofiSoon': 'Сторінка Ko-fi скоро з’явиться',
   'rank.?': 'невідомо',
@@ -331,6 +332,7 @@ const en: Record<Key, string> = {
   'shared.own': 'Start your own tracker',
 
   'footer.fan': 'Fan site. Not affiliated with Hotta Studio or Perfect World Games. Game names and images belong to their owners.',
+  'footer.contact': 'Contact and source on GitHub',
   'footer.kofi': 'Support on Ko-fi',
   'footer.kofiSoon': 'Ko-fi page coming soon',
   'rank.?': 'unknown',

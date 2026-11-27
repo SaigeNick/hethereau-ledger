@@ -3,3 +3,6 @@ export const KOFI_URL = ''
 
 export const EXPORTER_RELEASES = 'https://github.com/Golumpa/nte-exporter/releases'
 export const NPCAP_URL = 'https://npcap.com/'
+
+/** Source code and contact for players and rights holders. */
+export const REPO_URL = 'https://github.com/SaigeNick/hethereau-ledger'

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { KOFI_URL } from '../config'
+import { KOFI_URL, REPO_URL } from '../config'
 import { useI18n } from '../lib/i18n'
 import { useStore } from '../lib/store'
 
@@ -41,7 +41,12 @@ export function Footer() {
   const { t } = useI18n()
   return (
     <footer className="footer">
-      <p>{t('footer.fan')}</p>
+      <p>
+        {t('footer.fan')}{' '}
+        <a href={`${REPO_URL}/issues`} target="_blank" rel="noreferrer">
+          {t('footer.contact')}
+        </a>
+      </p>
       {KOFI_URL ? (
         <a className="kofi" href={KOFI_URL} target="_blank" rel="noreferrer">
           {t('footer.kofi')}

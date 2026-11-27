@@ -1,7 +1,7 @@
 # Hethereau Ledger
 
 Трекер круток для **Neverness to Everness**: гарант (pity) на всіх банерах, ваші S, статистика удачі, посилання на профіль.
-Фан-проєкт, не пов'язаний з Hotta Studio чи Perfect World Games.
+Фан-проєкт, не пов'язаний з Hotta Studio чи Perfect World Games. Назви та зображення з гри належать їхнім власникам.
 
 ## Що вміє
 
@@ -44,3 +44,16 @@ npx wrangler pages dev dist   # сайт разом з API посилань ло
 4. У Cloudflare: Workers & Pages → Create → Pages → підключіть цей GitHub-репозиторій.
    Build command: `npm run build`, output: `dist`.
 5. У налаштуваннях проєкту Pages → Bindings додайте KV namespace `SHARES`.
+
+## Імпорт однією командою
+
+`public/sync.ps1` лише ловить пакети історії круток з мережевого трафіку гри і копіює їх у буфер обміну.
+Розшифровує їх сайт (`src/lib/nteDecoder.ts`), тому команду не треба оновлювати, коли виходять нові персонажі чи банери.
+Скрипт нічого не надсилає в інтернет і не чіпає гру, її файли чи пам'ять.
+
+## Ліцензія
+
+Copyright (C) 2026 SaigeNick
+
+Код поширюється за ліцензією GNU AGPL-3.0 (див. `LICENSE`). Ігрові назви, дані та зображення
+належать Hotta Studio та Perfect World і під цю ліцензію не підпадають.
