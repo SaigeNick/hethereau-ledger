@@ -6,6 +6,7 @@ import { ImportError, parseExport } from '../lib/importer'
 import { newId, useStore } from '../lib/store'
 import { POOL_IDS, type PoolId, type PullRecord } from '../lib/types'
 import { loadDemo } from './OverviewPage'
+import { SyncImport } from '../components/SyncImport'
 
 type Line = { ok: boolean; text: string }
 
@@ -42,7 +43,10 @@ export function ImportPage() {
   return (
     <div className="import">
       <h1>{t('import.title')}</h1>
-      <p className="lead">{t('import.lead')}</p>
+      <SyncImport />
+
+      <h2 className="spaced">{t('import.exporterTitle')}</h2>
+      <p>{t('import.lead')}</p>
 
       <ol className="steps">
         <li>

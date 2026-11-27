@@ -64,7 +64,11 @@ for (const t of TABLES) {
 }
 
 // Vehicle liveries and gliders also live in the item tables.
-for (const [k, v] of Object.entries(rewards)) if (v[2] === 'item' && /(^|_)(vehicle|glider|livery)/i.test(k)) v[2] = 'vehicle'
+for (const [k, v] of Object.entries(rewards)) {
+  if (v[2] !== 'item') continue
+  if (/(^|_)(vehicle|livery)/i.test(k)) v[2] = 'vehicle'
+  else if (/^fashion_/i.test(k)) v[2] = 'cosmetic' // outfits and gliders
+}
 
 let withIcon = new Set()
 if (withImages) {

@@ -4,7 +4,9 @@ import { isBonus, RULES } from '../lib/banners'
 import { resolveAll } from '../lib/dictionary'
 import { useI18n } from '../lib/i18n'
 import { sortChrono } from '../lib/importer'
-import { computeStats, type PoolStats } from '../lib/stats'
+import { FEATURED, MILESTONES } from '../lib/bannerInfo'
+import { lookup } from '../lib/dictionary'
+import { bannerStats, computeStats, type PoolStats } from '../lib/stats'
 import { POOL_IDS, type PoolId, type PoolRecords, type PullRecord } from '../lib/types'
 import { BoardLegend, PityBoard } from './PityBoard'
 import { PityHistogram } from './PityHistogram'
@@ -154,6 +156,7 @@ export function BannerBody({
         ? rows.filter((x) => isBonus(x.r))
         : rows.filter((x) => !isBonus(x.r) && (x.r.rank === 'S' || x.r.rank === 'A'))
   const hasBonus = rows.some((x) => isBonus(x.r))
+  const banners = useMemo(() => (pool === 'Lottery_LimitedCharacter' ? bannerStats(records, FEATURED) : []), [pool, records])
 
   return (
     <div className="banner">
@@ -198,6 +201,40 @@ export function BannerBody({
           </ol>
         )}
       </section>
+
+      {banners.length > 0 && (
+        <section>
+          <h2>{t('banner.banners')}</h2>
+          <p className="muted">{t('banner.bannersNote')}</p>
+          <ol className="banners">
+            {banners.map((b) => {
+              const f = b.featuredId ? lookup(b.featuredId) : null
+              const name = f?.name ?? b.banner.replace(/^Lottery_/, '')
+              return (
+                <li key={b.banner}>
+                  <Portrait id={b.featuredId ?? ''} name={name} rank="S" />
+                  <div className="banner-main">
+                    <span className="drop-name">{name}</span>
+                    <span className="drop-date muted">
+                      {fmtDate(b.firstTime)} – {fmtDate(b.lastTime)}
+                      {b.sDrops.length > 0 && ` · ${t('banner.gotS', { n: b.sDrops.length })}`}
+                    </span>
+                    <div className="milestones" role="img" aria-label={t('banner.milestoneAria', { n: b.pulls })}>
+                      <span className="ms-fill" style={{ width: `${Math.min(100, (b.pulls / 200) * 100)}%` }} />
+                      {MILESTONES.map((m) => (
+                        <span key={m} className={'ms-mark' + (b.pulls >= m ? ' is-done' : '')} style={{ left: `${(m / 200) * 100}%` }}>
+                          <em>{m}</em>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="drop-pity">{b.pulls}</span>
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+      )}
 
       {s.rareDrops.length > 0 && (
         <section>
@@ -251,7 +288,10 @@ export function BannerBody({
             </thead>
             <tbody>
               {shown.slice(0, limit).map(({ r, pity }) => (
-                <tr key={r.uid} className={isBonus(r) ? 'row-bonus' : `row-${r.rank === '?' ? 'u' : r.rank}`}>
+                <tr
+                  key={r.uid}
+                  className={isBonus(r) ? 'row-bonus' : r.rewardType === 'item' || r.rank === '?' ? 'row-plain' : `row-${r.rank}`}
+                >
                   <td className="muted nowrap">{r.time.slice(0, 16)}</td>
                   <td>
                     {r.name}

@@ -30,6 +30,8 @@ export interface PullRecord {
   qty?: number
   roll?: number
   manual?: boolean
+  /** Exact banner, e.g. "Lottery_YeErMu", when the source knows it. */
+  banner?: string
 }
 
 export type PoolRecords = Record<PoolId, PullRecord[]>

@@ -94,3 +94,33 @@ export function pityBuckets(drops: TopDrop[], max: number, size = 10) {
   }
   return buckets
 }
+
+export interface BannerStat {
+  banner: string
+  featuredId?: string
+  pulls: number
+  sDrops: PullRecord[]
+  firstTime: string
+  lastTime: string
+}
+
+/** Per-banner pulls, for the 50/120/200 skin milestones. Newest banner first. */
+export function bannerStats(records: PullRecord[], featured: Record<string, string>): BannerStat[] {
+  const map = new Map<string, BannerStat>()
+  for (const r of sortChrono(records)) {
+    if (!r.banner) continue
+    let b = map.get(r.banner)
+    if (!b) {
+      b = { banner: r.banner, featuredId: featured[r.banner], pulls: 0, sDrops: [], firstTime: r.time, lastTime: r.time }
+      map.set(r.banner, b)
+    }
+    b.lastTime = r.time
+    if (isBonus(r)) continue
+    if (r.kind === 'dice' || r.kind === 'manual') b.pulls++
+    if (r.rank === 'S' && r.rewardType === 'character') {
+      b.sDrops.push(r)
+      b.featuredId ??= r.rewardId
+    }
+  }
+  return [...map.values()].sort((a, b) => (a.lastTime < b.lastTime ? 1 : -1))
+}
