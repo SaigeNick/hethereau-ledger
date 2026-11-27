@@ -1862,3 +1862,145 @@ h2.spaced {
   align-items: center;
   margin-bottom: 12px;
 }
+
+/* Achievements */
+.ach {
+  max-width: 860px;
+}
+.ach-summary {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--night-2);
+  padding: 16px 20px;
+  margin: 20px 0;
+}
+.ach-summary p {
+  margin: 0;
+}
+.ach-count strong {
+  font: 700 1.6rem var(--display);
+}
+.meter--teal span {
+  background: var(--teal);
+}
+.ach-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+}
+.ach-controls input[type='search'] {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.ach-controls .check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.ach-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.chip.is-on {
+  border-color: var(--pink);
+  background: rgba(255, 95, 168, 0.12);
+}
+.chip:focus-visible {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+}
+.ach-group {
+  margin-top: 24px;
+}
+.ach-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ach-group-head h2 {
+  margin: 0;
+}
+.ach-tape {
+  font: 400 0.85rem var(--body);
+}
+.ach-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.ach-item label {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.ach-item input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--teal);
+}
+.ach-icon {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+.ach-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ach-title {
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.ach-desc {
+  font-size: 0.9rem;
+}
+.ach-reward {
+  font-size: 0.85rem;
+  color: var(--sodium);
+  white-space: nowrap;
+}
+.ach-item.is-done .ach-title {
+  color: var(--teal);
+}
+.ach-item.is-done .ach-icon {
+  opacity: 1;
+}
+.ach-item:not(.is-done) .ach-icon {
+  opacity: 0.55;
+}
+.ach-item.q3 .ach-title::after {
+  content: '★';
+  color: var(--sodium);
+  font-size: 0.8rem;
+}
+@media (max-width: 600px) {
+  .ach-item label {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+  .ach-reward {
+    grid-column: 3;
+  }
+}

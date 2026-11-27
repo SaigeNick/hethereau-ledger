@@ -5,6 +5,7 @@ import { I18nProvider } from './lib/i18n'
 import { StoreProvider } from './lib/store'
 import { BannerPage } from './pages/BannerPage'
 import { BannersPage } from './pages/BannersPage'
+import { AchievementsPage } from './pages/AchievementsPage'
 import { GuidePage } from './pages/GuidePage'
 import { ImportPage } from './pages/ImportPage'
 import { PlannerPage } from './pages/PlannerPage'
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="pool/:poolId" element={<BannerPage />} />
               <Route path="import" element={<ImportPage />} />
               <Route path="guide" element={<GuidePage />} />
+              <Route path="achievements" element={<AchievementsPage />} />
               <Route path="banners" element={<BannersPage />} />
               <Route path="planner" element={<PlannerPage />} />
               <Route path="faq" element={<FaqPage />} />

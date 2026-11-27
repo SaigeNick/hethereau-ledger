@@ -47,6 +47,8 @@ export interface Profile {
   share?: { id: string; token: string; updatedAt: string; sig?: string }
   /** Share link this profile was copied from (a read-only copy on another device). */
   source?: string
+  /** IDs of achievements the player marked as done. */
+  achievements?: string[]
 }
 
 export interface StoreState {

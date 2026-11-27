@@ -52,6 +52,8 @@ interface StoreApi {
   replaceAll: (s: StoreState) => void
   /** Saves a shared profile on this device, or refreshes the copy made earlier. */
   adoptShare: (shareId: string, snap: SharedSnapshot) => string
+  /** Marks achievements done or not on the active profile. */
+  setAchievements: (ids: string[], done: boolean) => void
 }
 
 const Ctx = createContext<StoreApi | null>(null)
@@ -146,6 +148,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit({ ...s, tombstones: bury(s, [id], []), profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
       },
       replaceAll: (s) => commit(s),
+      setAchievements(ids, done) {
+        patch(activeOf(cur()).id, (p) => {
+          const set = new Set(p.achievements ?? [])
+          for (const id of ids) {
+            if (done) set.add(id)
+            else set.delete(id)
+          }
+          return { ...p, achievements: [...set] }
+        })
+      },
       adoptShare(shareId, snap) {
         const s = cur()
         const existing = s.profiles.find((p) => p.source === shareId)

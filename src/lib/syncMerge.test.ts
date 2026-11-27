@@ -37,3 +37,10 @@ describe('mergeStates', () => {
     expect(m.activeId).toBe('c')
   })
 })
+
+describe('achievements in sync', () => {
+  it('keeps ticks from both devices', () => {
+    const m = mergeStates(st([prof('a', ['1'], { achievements: ['x', 'y'] })]), st([prof('a', ['1'], { achievements: ['y', 'z'] })]))
+    expect(m.profiles[0].achievements?.sort()).toEqual(['x', 'y', 'z'])
+  })
+})

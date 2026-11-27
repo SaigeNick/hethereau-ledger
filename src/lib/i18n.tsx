@@ -10,6 +10,7 @@ const uk = {
   'nav.faq': 'FAQ',
   'nav.planner': 'Калькулятор',
   'nav.banners': 'Банери',
+  'nav.achievements': 'Ачівки',
   'lang.switch': 'English',
 
   'pool.Lottery_LimitedCharacter': 'Лімітована дошка',
@@ -224,6 +225,7 @@ const en: Record<Key, string> = {
   'nav.profile': 'Profile',
   'nav.planner': 'Planner',
   'nav.banners': 'Banners',
+  'nav.achievements': 'Achievements',
   'nav.faq': 'FAQ',
   'lang.switch': 'Українська',
 
