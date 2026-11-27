@@ -401,7 +401,7 @@ const PRIVACY: Record<Lang, Doc> = {
           'Сайт зберігає у localStorage вашого браузера:',
           [
             'профілі та історію круток, яку ви імпортували чи додали вручну;',
-            'налаштування: мову та вигляд історії;',
+            'налаштування: мову, вигляд історії та значення калькулятора;',
             'службові ключі посилань на профіль, щоб ви могли їх оновити чи видалити.',
           ],
           'Ці дані не залишають ваш пристрій, поки ви не створите посилання на профіль. Видалити їх можна на сторінці [Профіль](#/profile) або очистивши дані сайту в налаштуваннях браузера. Це сховище потрібне лише для роботи функцій, якими ви користуєтеся, тому окрема згода на нього не потрібна.',
@@ -488,7 +488,7 @@ const PRIVACY: Record<Lang, Doc> = {
           'The site stores in your browser’s localStorage:',
           [
             'your profiles and the pull history you imported or added by hand;',
-            'settings: language and history view;',
+            'settings: language, history view and planner values;',
             'the private keys of your profile links, so you can update or delete them.',
           ],
           'This data does not leave your device unless you create a profile link. You can delete it on the [Profile](#/profile) page or by clearing site data in your browser settings. This storage is only used for features you ask for, so no separate consent is needed.',

@@ -21,6 +21,7 @@ export function Layout() {
             {t('nav.overview')}
           </NavLink>
           <NavLink to="/import">{t('nav.import')}</NavLink>
+          <NavLink to="/planner">{t('nav.planner')}</NavLink>
           <NavLink to="/guide">{t('nav.guide')}</NavLink>
           <NavLink to="/faq">{t('nav.faq')}</NavLink>
           <NavLink to="/profile">{t('nav.profile')}</NavLink>

@@ -8,6 +8,7 @@ const uk = {
   'nav.guide': 'Як працює гача',
   'nav.profile': 'Профіль',
   'nav.faq': 'FAQ',
+  'nav.planner': 'Калькулятор',
   'lang.switch': 'English',
 
   'pool.Lottery_LimitedCharacter': 'Лімітована дошка',
@@ -199,6 +200,7 @@ const en: Record<Key, string> = {
   'nav.import': 'Import',
   'nav.guide': 'How it works',
   'nav.profile': 'Profile',
+  'nav.planner': 'Planner',
   'nav.faq': 'FAQ',
   'lang.switch': 'Українська',
 
