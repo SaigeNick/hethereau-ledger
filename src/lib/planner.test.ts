@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chanceOfCopies, plan, rollsToGuarantee } from './planner'
+import { arcChanceOfCopies, arcPlan, chanceOfCopies, plan, rollsToGuarantee } from './planner'
 
 describe('planner', () => {
   it('is certain at hard pity and impossible with no rolls', () => {
@@ -24,5 +24,28 @@ describe('planner', () => {
     const r = plan({ pity: 9, annulith: 1600, dice: 5, dailyAnnulith: 160, days: 10, copies: 1 })
     expect(r.rolls).toBe(25)
     expect(r.missingRolls).toBe(81 - 25)
+  })
+})
+
+describe('arc planner', () => {
+  it('guarantees the featured Arc by 80 pulls', () => {
+    expect(arcChanceOfCopies(80, 0, 0, 1)[0]).toBeCloseTo(1, 10)
+    expect(arcChanceOfCopies(10, 0, 75, 1)[0]).toBeCloseTo(1, 10)
+  })
+  it('matches the quoted featured rate roughly', () => {
+    // expected pulls per featured Arc from a fresh start
+    let e = 0
+    let prev = 0
+    for (let r = 1; r <= 80; r++) {
+      const c = arcChanceOfCopies(r, 0, 0, 1)[0]
+      e += r * (c - prev)
+      prev = c
+    }
+    expect(e).toBeGreaterThan(50)
+    expect(e).toBeLessThan(70)
+  })
+  it('counts pulls in tens', () => {
+    expect(arcPlan({ sinceS: 0, sinceF: 0, pulls: 37, copies: 1 }).rolls).toBe(30)
+    expect(arcPlan({ sinceS: 0, sinceF: 23, pulls: 0, copies: 1 }).guarantee).toBe(60)
   })
 })

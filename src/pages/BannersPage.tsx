@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Milestones } from '../components/BannerList'
 import { Portrait } from '../components/Portrait'
 import { RUNS, TITLES, type BannerRun } from '../data/schedule'
+import { ARC_FEATURED, arcBannerOf } from '../data/arcBanners'
 import { FEATURED } from '../lib/bannerInfo'
 import { isBonus } from '../lib/banners'
 import { lookup, resolveAll } from '../lib/dictionary'
@@ -21,6 +22,8 @@ const TEXT = {
     rerun: 'Повтор',
     you: (n: number) => `Ти: ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'кидок' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'кидки' : 'кидків'}`,
     sAt: (p: number) => `S на ${p}-му`,
+    arc: (n: number) => `Arc: ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'кидок' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'кидки' : 'кидків'}`,
+    at: (p: number) => `на ${p}-му`,
     none: 'Не крутив',
     milestones: 'Етапи банера (рахуються разом з повторами)',
     tabTime: 'Хронологія',
@@ -43,6 +46,8 @@ const TEXT = {
     rerun: 'Rerun',
     you: (n: number) => `You: ${n} roll${n === 1 ? '' : 's'}`,
     sAt: (p: number) => `S at ${p}`,
+    arc: (n: number) => `Arc: ${n} pull${n === 1 ? '' : 's'}`,
+    at: (p: number) => `at ${p}`,
     none: 'Not pulled',
     milestones: 'Banner milestones (shared with reruns)',
     tabTime: 'Timeline',
@@ -96,25 +101,37 @@ interface RunView {
   sPities: number[]
   /** Pulls on this banner ID up to the end of this run (milestones carry over to reruns). */
   milestonePulls: number
+  arcPulls: number
+  arcS: { name: string; pity: number; featured: boolean }[]
 }
 
-function useRuns(records: PullRecord[]): RunView[] {
+function useRuns(records: PullRecord[], arcRecords: PullRecord[]): RunView[] {
   return useMemo(() => {
     const resolved = resolveAll(records)
     const pityByUid = new Map(computeStats('Lottery_LimitedCharacter', resolved).sDrops.map((d) => [d.record.uid, d.pity]))
+    const arcs = resolveAll(arcRecords)
+    const arcPity = new Map(computeStats('Arc_MiracleBox', arcs).sDrops.map((d) => [d.record.uid, d.pity]))
     const now = today()
     return RUNS.map((run) => {
       const mine = resolved.filter((r) => r.banner === run.banner && !isBonus(r) && (r.kind === 'dice' || r.kind === 'manual'))
-      const inRun = mine.filter((r) => r.time.slice(0, 10) >= run.start && r.time.slice(0, 10) < run.end)
+      const within = (r: PullRecord) => r.time.slice(0, 10) >= run.start && r.time.slice(0, 10) < run.end
+      const inRun = mine.filter(within)
+      // A rerun shares its Arc banner with the original run; dates tell them apart.
+      const arcBanner = arcBannerOf(run.banner)
+      const arcRun = arcBanner ? arcs.filter((r) => r.banner === arcBanner && within(r)) : []
       return {
         run,
         status: now < run.start ? 'soon' : now < run.end ? 'now' : 'past',
         pulls: inRun.length,
         sPities: inRun.filter((r) => r.rank === 'S' && r.rewardType === 'character').map((r) => pityByUid.get(r.uid) ?? 0),
         milestonePulls: mine.filter((r) => r.time.slice(0, 10) < run.end).length,
+        arcPulls: arcRun.length,
+        arcS: arcRun
+          .filter((r) => r.rank === 'S')
+          .map((r) => ({ name: r.name, pity: arcPity.get(r.uid) ?? 0, featured: !!arcBanner && ARC_FEATURED[arcBanner] === r.rewardId })),
       } satisfies RunView
     })
-  }, [records])
+  }, [records, arcRecords])
 }
 
 function fmtRange(run: BannerRun, lang: Lang) {
@@ -127,7 +144,7 @@ export function BannersPage() {
   const { lang } = useI18n()
   const x = TEXT[lang]
   const { active } = useStore()
-  const views = useRuns(active.records.Lottery_LimitedCharacter)
+  const views = useRuns(active.records.Lottery_LimitedCharacter, active.records.Arc_MiracleBox)
 
   const [tab, setTab] = useState<'time' | 'chars'>(() => {
     try {
@@ -202,7 +219,18 @@ export function BannersPage() {
                         </div>
                       </>
                     ) : (
-                      v.status !== 'soon' && <p className="muted run-you">{x.none}</p>
+                      v.status !== 'soon' && v.arcPulls === 0 && <p className="muted run-you">{x.none}</p>
+                    )}
+                    {v.arcPulls > 0 && (
+                      <p className="run-you run-arc">
+                        {x.arc(v.arcPulls)}
+                        {v.arcS.map((a, i) => (
+                          <span key={i} className={a.featured ? 'run-s' : 'run-s-off'}>
+                            {a.name} {x.at(a.pity)}
+                            {a.featured ? ' ★' : ''}
+                          </span>
+                        ))}
+                      </p>
                     )}
                   </div>
                 </li>
