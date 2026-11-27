@@ -27,10 +27,22 @@ import type { PoolId, PullRecord } from './types'
  */
 
 const enc = new TextEncoder()
-const STRUCTS = [{ name: 'FMonopolyLotteryRecordData', kind: 'monopoly' as const }]
+
+type StructKind = 'monopoly' | 'fork' | 'gashapon'
+/**
+ * pageAt: where the page number sits, counted back from the struct name
+ * (u32, value >>> 7). The 4 bytes before it identify the stream.
+ */
+const STRUCTS: { name: string; kind: StructKind; pageAt: number | null }[] = [
+  { name: 'FMonopolyLotteryRecordData', kind: 'monopoly', pageAt: 19 },
+  { name: 'FForkLotteryRecordData', kind: 'fork', pageAt: 10 },
+  { name: 'FGashaponLotteryRecordData', kind: 'gashapon', pageAt: null },
+]
 const NEEDLES = STRUCTS.map((s) => ({ ...s, bytes: enc.encode(s.name + '\0') }))
 
 export interface RawRow {
+  /** Which history this row came from. Monopoly when absent (older tests). */
+  kind?: StructKind
   roll: number
   reward: string
   items: string[]
@@ -101,6 +113,41 @@ class Reader {
 const TICKS_MIN = 638_800_000_000_000_000n // 2025
 const TICKS_MAX = 640_500_000_000_000_000n // 2030
 
+function readTicks(r: Reader) {
+  const ticks = r.i64()
+  if (ticks < TICKS_MIN || ticks > TICKS_MAX) throw new Error('bad time')
+  return ticks
+}
+
+/** One history row. Layouts differ per history type; see the notes at the top. */
+function readRow(r: Reader, kind: StructKind): RawRow {
+  if (kind === 'fork') {
+    const reward = r.str()
+    const banner = r.str()
+    return { kind, roll: 1, reward, items: [], source: 'Fork', ticks: readTicks(r), banner }
+  }
+  if (kind === 'gashapon') {
+    const item = r.str()
+    const qty = r.i32()
+    if (qty < 1 || qty > 100000) throw new Error('bad qty')
+    r.o += 1 // flag, always 1 so far
+    const ticks = readTicks(r)
+    const box = r.str()
+    r.i32()
+    return { kind, roll: 1, reward: qty > 1 ? `${item},${qty}` : item, items: [], source: 'Gashapon', ticks, banner: box }
+  }
+  const roll = r.i32()
+  const reward = r.str()
+  r.i32()
+  const itemCount = r.i32()
+  if (itemCount < 0 || itemCount > 20) throw new Error('bad items')
+  const items = Array.from({ length: itemCount }, () => r.str())
+  const source = r.str()
+  const ticks = readTicks(r)
+  const banner = r.str()
+  return { kind, roll, reward, items, source, ticks, banner }
+}
+
 /** Finds and parses every history page inside one packet. */
 export function decodePacket(payload: Uint8Array): DecodedPage[] {
   const pages: DecodedPage[] = []
@@ -116,27 +163,15 @@ export function decodePacket(payload: Uint8Array): DecodedPage[] {
           const count = r.i32()
           if (count < 0 || count > 100) throw new Error('bad count')
           const rows: RawRow[] = []
-          for (let n = 0; n < count; n++) {
-            const roll = r.i32()
-            const reward = r.str()
-            r.i32()
-            const itemCount = r.i32()
-            if (itemCount < 0 || itemCount > 20) throw new Error('bad items')
-            const items = Array.from({ length: itemCount }, () => r.str())
-            const source = r.str()
-            const ticks = r.i64()
-            if (ticks < TICKS_MIN || ticks > TICKS_MAX) throw new Error('bad time')
-            const banner = r.str()
-            rows.push({ roll, reward, items, source, ticks, banner })
-          }
+          for (let n = 0; n < count; n++) rows.push(readRow(r, st.kind))
           let page: number | null = null
           let stream = ''
-          if (j >= 23) {
+          if (st.pageAt !== null && j >= st.pageAt + 4) {
             const v = new DataView(s.buffer, s.byteOffset)
-            const raw = v.getUint32(j - 19, true)
+            const raw = v.getUint32(j - st.pageAt, true)
             const p = raw >>> 7
             if ((raw & 0x7f) === 0 && p > 0 && p < 100000) page = p
-            stream = Array.from(s.subarray(j - 23, j - 19), (x) => x.toString(16).padStart(2, '0')).join('')
+            stream = Array.from(s.subarray(j - st.pageAt - 4, j - st.pageAt), (x) => x.toString(16).padStart(2, '0')).join('')
           }
           pages.push({ struct: st.name, stream, page, rows })
         } catch {
@@ -168,7 +203,7 @@ export function assemble(pages: DecodedPage[]): RawRow[][] {
     }
     // Standard and event histories can share one stream and reuse page numbers,
     // so keep them apart by pool or page 1 of one overwrites page 1 of the other.
-    const key = `${p.struct}|${p.stream}|${poolOf(p.rows[0].banner)}`
+    const key = `${p.struct}|${p.stream}|${poolOf(p.rows[0])}`
     if (!streams.has(key)) streams.set(key, new Map())
     streams.get(key)!.set(p.page, p.rows)
   }
@@ -199,8 +234,10 @@ export function ticksToLocal(t: bigint): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
 }
 
-function poolOf(banner: string): PoolId {
-  return banner === 'Lottery_Permanent' ? 'Lottery_Permanent' : 'Lottery_LimitedCharacter'
+function poolOf(row: RawRow): PoolId {
+  if (row.kind === 'fork') return 'Arc_MiracleBox'
+  if (row.kind === 'gashapon') return 'Gashapon_MysteryBox'
+  return row.banner === 'Lottery_Permanent' ? 'Lottery_Permanent' : 'Lottery_LimitedCharacter'
 }
 
 /** Turns an assembled newest-first stream into tracker records. */
@@ -212,19 +249,19 @@ export function toRecords(rows: RawRow[]): PullRecord[] {
     ord = r.ticks === lastTicks ? ord + 1 : 0
     lastTicks = r.ticks
     const [id, qtyText] = r.reward.split(',')
-    const pool = poolOf(r.banner)
+    const pool = poolOf(r)
     out.push({
       uid: `${pool}:${r.ticks}:${ord}`,
       pool,
       time: ticksToLocal(r.ticks),
       ord,
-      kind: r.roll > 0 ? 'dice' : r.roll === 0 ? 'points_gift' : 'chase_reward',
+      kind: r.kind === 'fork' ? 'arc' : r.kind === 'gashapon' ? 'gashapon' : r.roll > 0 ? 'dice' : r.roll === 0 ? 'points_gift' : 'chase_reward',
       rewardType: 'item',
       rewardId: id,
       name: id,
       rank: '?',
       qty: qtyText ? Number(qtyText) || 1 : 1,
-      roll: r.roll > 0 ? r.roll : undefined,
+      roll: r.kind === 'fork' || r.kind === 'gashapon' ? undefined : r.roll > 0 ? r.roll : undefined,
       banner: r.banner,
     })
   }

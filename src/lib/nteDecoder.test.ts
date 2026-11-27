@@ -108,3 +108,17 @@ describe('assemble across banners', () => {
     expect(out.map((s) => s.length).sort()).toEqual([2, 3])
   })
 })
+
+describe('real capture with every history type', () => {
+  const fixture = 'tests/private/sample-all.txt'
+  it.skipIf(!existsSync(fixture))('decodes event, standard, Arc and Mystery Box from one sync', () => {
+    const packets = readFileSync(fixture, 'utf8').trim().split('\n').map((b) => Uint8Array.from(Buffer.from(b, 'base64')))
+    const r = decodePackets(packets)
+    expect(r.Lottery_LimitedCharacter).toHaveLength(623)
+    expect(r.Lottery_Permanent).toHaveLength(288)
+    expect(r.Arc_MiracleBox).toHaveLength(280)
+    expect(r.Gashapon_MysteryBox).toHaveLength(8)
+    expect(new Set(r.Arc_MiracleBox.map((x) => x.uid)).size).toBe(280)
+    expect(resolveAll(r.Arc_MiracleBox).filter((x) => x.rank === 'S').length).toBe(10)
+  })
+})
