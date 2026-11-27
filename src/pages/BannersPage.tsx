@@ -9,6 +9,7 @@ import { isBonus } from '../lib/banners'
 import { lookup, resolveAll } from '../lib/dictionary'
 import { useI18n, type Lang } from '../lib/i18n'
 import { computeStats } from '../lib/stats'
+import { fmtEur, pullValue } from '../lib/spend'
 import { useStore } from '../lib/store'
 import type { PullRecord } from '../lib/types'
 
@@ -208,6 +209,7 @@ export function BannersPage() {
                       <>
                         <p className="run-you">
                           {x.you(v.pulls)}
+                          <span className="muted">≈ {fmtEur(pullValue(v.pulls).eur, lang)}</span>
                           {v.sPities.map((p, i) => (
                             <span key={i} className="run-s">
                               {x.sAt(p)}

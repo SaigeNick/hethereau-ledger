@@ -1811,3 +1811,54 @@ h2.spaced {
   color: var(--ink);
   opacity: 0.8;
 }
+
+.totals {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 700px) {
+  .totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .totals > div:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .totals > div:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* Share card */
+.share-card-btn {
+  margin: 0 0 28px;
+}
+.share-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--night-2);
+  padding: 18px 20px;
+  margin: 0 0 28px;
+}
+.share-card h2 {
+  margin-top: 0;
+}
+.share-card img,
+.share-card-wait {
+  display: block;
+  width: min(360px, 100%);
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border-radius: 12px;
+  margin: 14px 0;
+  background: var(--night-3);
+}
+.btn.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.share-card .check {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}

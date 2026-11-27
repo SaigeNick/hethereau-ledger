@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { GlobalCard } from '../components/GlobalCard'
+import { ShareCard } from '../components/ShareCard'
 import { hasAnyRecords, OverviewBody } from '../components/PoolViews'
 import { loadDemo } from '../lib/demoLoader'
 import { useI18n } from '../lib/i18n'
@@ -31,6 +32,7 @@ export function OverviewPage() {
     <>
       <h1 className="page-title">{active.name || t('overview.title')}</h1>
       <GlobalCard profile={active} />
+      <ShareCard profile={active} />
       <OverviewBody records={active.records} base="" />
     </>
   )

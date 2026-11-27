@@ -1,3 +1,4 @@
+import { ANNULITH_PER_PULL, fmtEur, pullValue } from '../lib/spend'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FEATURED } from '../lib/bannerInfo'
@@ -18,7 +19,6 @@ export function hasAnyRecords(records: PoolRecords) {
 }
 
 /** Cost of one dice or Tri-Key in Annulith. */
-const ANNULITH_PER_PULL = 160
 
 function luckPct(s: PoolStats) {
   return s.luck === null ? null : Math.round((s.luck - 1) * 100)
@@ -152,7 +152,7 @@ function PoolCard({ s, base, featured }: { s: PoolStats; base: string; featured?
 }
 
 export function OverviewBody({ records, base }: { records: PoolRecords; base: string }) {
-  const { t, fmtDate } = useI18n()
+  const { t, fmtDate, lang } = useI18n()
   const resolved = useMemo(() => Object.fromEntries(POOL_IDS.map((p) => [p, resolveAll(records[p])])) as PoolRecords, [records])
   const stats = useMemo(() => POOL_IDS.map((p) => computeStats(p, resolved[p])), [resolved])
   const banners = useMemo(() => bannerStats(resolved.Lottery_LimitedCharacter, FEATURED), [resolved])
@@ -174,6 +174,10 @@ export function OverviewBody({ records, base }: { records: PoolRecords; base: st
         <div>
           <dt>{t('totals.annulith')}</dt>
           <dd>{(paid * ANNULITH_PER_PULL).toLocaleString()}</dd>
+        </div>
+        <div title={t('totals.valueNote')}>
+          <dt>{t('totals.value')}</dt>
+          <dd>≈ {fmtEur(pullValue(paid).eur, lang)}</dd>
         </div>
       </dl>
 
