@@ -1635,3 +1635,78 @@ h2.spaced {
     position: static;
   }
 }
+
+/* Banner archive */
+.archive {
+  max-width: 820px;
+}
+.archive > section {
+  margin-top: 32px;
+}
+.archive h2 {
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.runs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.run {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.run.is-soon {
+  opacity: 0.7;
+}
+.run-main p {
+  margin: 0;
+}
+.run-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.run-sub {
+  font-size: 0.9rem;
+  margin-top: 2px !important;
+}
+.run-you {
+  margin-top: 6px !important;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+}
+.run-s {
+  color: var(--sodium);
+  font-weight: 600;
+}
+.run .milestones {
+  margin-bottom: 6px;
+}
+.tag {
+  font-size: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  color: var(--muted);
+}
+.tag-now {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+.tag-rerun {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+.archive > .note {
+  margin-top: 28px;
+  max-width: 68ch;
+}
