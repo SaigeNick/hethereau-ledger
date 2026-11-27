@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RULES } from '../lib/banners'
+import { resolveAll } from '../lib/dictionary'
 import { useI18n } from '../lib/i18n'
 import { sortChrono } from '../lib/importer'
 import { computeStats, type PoolStats } from '../lib/stats'
@@ -64,7 +65,7 @@ function StatRow({ s }: { s: PoolStats }) {
 
 export function OverviewBody({ records, base }: { records: PoolRecords; base: string }) {
   const { t } = useI18n()
-  const stats = useMemo(() => POOL_IDS.map((p) => computeStats(p, records[p])), [records])
+  const stats = useMemo(() => POOL_IDS.map((p) => computeStats(p, resolveAll(records[p]))), [records])
   return (
     <div className="overview">
       {stats.map((s) => {
@@ -125,6 +126,7 @@ export function BannerBody({
   onDelete?: (uid: string) => void
 }) {
   const { t, fmtDate } = useI18n()
+  records = resolveAll(records)
   const rules = RULES[pool]
   const s = useMemo(() => computeStats(pool, records), [pool, records])
   const [filter, setFilter] = useState<'all' | 'top'>('all')
