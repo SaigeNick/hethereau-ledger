@@ -13,45 +13,48 @@ import { fmtEur, pullValue } from '../lib/spend'
 import { arcPity } from '../lib/arc'
 import { useStore } from '../lib/store'
 import type { PullRecord } from '../lib/types'
+import { daysUk, pluralUk, pullsUk, rollsUk } from '../lib/plural'
 
 const TEXT = {
   uk: {
     title: 'Архів банерів',
-    lead: 'Усі лімітовані банери персонажів з датами. Якщо ти імпортував історію командою, тут видно, скільки ти крутив на кожному і що вибив.',
+    lead: 'Усі лімітовані банери персонажів з датами. Якщо ви імпортували історію командою, тут видно, скільки ви крутили на кожному банері і що отримали.',
     version: 'Версія',
     now: 'Зараз',
     soon: 'Скоро',
     rerun: 'Повтор',
-    you: (n: number) => `Ти: ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'кидок' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'кидки' : 'кидків'}`,
+    board: 'Дошка',
+    rolls: rollsUk,
     sAt: (p: number) => `S на ${p}-му`,
-    arc: (n: number) => `Arc: ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'кидок' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'кидки' : 'кидків'}`,
-    at: (p: number) => `на ${p}-му`,
-    none: 'Не крутив',
-    milestones: 'Етапи банера (рахуються разом з повторами)',
+    arc: pullsUk,
+    at: (p: number) => `на ${p}-й`,
+    none: 'Не крутили',
+    milestones: 'Пороги банера: 50, 120, 200 кидків (рахуються разом із повторами банера)',
     tabTime: 'Хронологія',
     tabChars: 'Персонажі',
     charsLead: 'Скільки минуло з останнього банера кожного персонажа. Чим довше, тим ймовірніший повтор.',
-    daysAgo: (n: number) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'день' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'дні' : 'днів'}`,
+    daysAgo: daysUk,
     ago: 'тому',
-    inDays: (n: number) => `через ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'день' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'дні' : 'днів'}`,
+    inDays: (n: number) => `через ${daysUk(n)}`,
     last: 'Востаннє',
     next: 'Повтор',
-    runs: (n: number) => `${n} ${n === 1 ? 'банер' : n >= 2 && n <= 4 ? 'банери' : 'банерів'}`,
-    note: 'Дати взято з офіційних анонсів версій; банер змінюється в день оновлення. Особиста статистика є лише для круток, імпортованих командою синхронізації.',
+    runs: (n: number) => pluralUk(n, 'банер', 'банери', 'банерів'),
+    note: 'Дати взято з офіційних анонсів версій; банер змінюється в день оновлення. Особиста статистика є лише для круток, імпортованих командою.',
   },
   en: {
     title: 'Banner archive',
-    lead: 'Every limited character banner with its dates. If you imported your history with the sync command, you can see how much you pulled on each and what you got.',
+    lead: 'Every limited character banner with its dates. If you imported your history with the command, you can see how much you rolled on each banner and what you got.',
     version: 'Version',
     now: 'Now',
     soon: 'Soon',
     rerun: 'Rerun',
-    you: (n: number) => `You: ${n} roll${n === 1 ? '' : 's'}`,
-    sAt: (p: number) => `S at ${p}`,
-    arc: (n: number) => `Arc: ${n} pull${n === 1 ? '' : 's'}`,
-    at: (p: number) => `at ${p}`,
+    board: 'Board',
+    rolls: (n: number) => `${n} roll${n === 1 ? '' : 's'}`,
+    sAt: (p: number) => `S on roll ${p}`,
+    arc: (n: number) => `${n} pull${n === 1 ? '' : 's'}`,
+    at: (p: number) => `on pull ${p}`,
     none: 'Not pulled',
-    milestones: 'Banner milestones (shared with reruns)',
+    milestones: 'Banner milestones: 50, 120 and 200 rolls (reruns of the banner count too)',
     tabTime: 'Timeline',
     tabChars: 'Characters',
     charsLead: 'How long since each character’s last banner. The longer the wait, the likelier a rerun.',
@@ -61,7 +64,7 @@ const TEXT = {
     last: 'Last',
     next: 'Rerun',
     runs: (n: number) => `${n} banner${n === 1 ? '' : 's'}`,
-    note: 'Dates come from official version previews; banners switch on update day. Personal stats only cover pulls imported with the sync command.',
+    note: 'Dates come from official version previews; banners switch on update day. Personal stats only cover pulls imported with the command.',
   },
 }
 
@@ -207,35 +210,40 @@ export function BannersPage() {
                     <p className="muted run-sub">
                       {TITLES[v.run.banner] ?? ''} · {fmtRange(v.run, lang)}
                     </p>
-                    {v.pulls > 0 ? (
-                      <>
-                        <p className="run-you">
-                          {x.you(v.pulls)}
-                          <span className="muted">≈ {fmtEur(pullValue(v.pulls).eur, lang)}</span>
-                          {v.sPities.map((p, i) => (
-                            <span key={i} className="run-s">
-                              {x.sAt(p)}
-                            </span>
-                          ))}
-                        </p>
-                        <div title={x.milestones}>
-                          <Milestones pulls={v.milestonePulls} />
-                        </div>
-                      </>
-                    ) : (
-                      v.status !== 'soon' && v.arcPulls === 0 && <p className="muted run-you">{x.none}</p>
+                    {(v.pulls > 0 || v.arcPulls > 0) && (
+                      <div className="run-stats">
+                        {v.pulls > 0 && (
+                          <>
+                            <p className="run-line">
+                              <span className="run-label">{x.board}</span>
+                              <span className="rc">{x.rolls(v.pulls)}</span>
+                              <span className="rc rc-quiet">≈ {fmtEur(pullValue(v.pulls).eur, lang)}</span>
+                              {v.sPities.map((p, i) => (
+                                <span key={i} className="rc rc-s">
+                                  {x.sAt(p)}
+                                </span>
+                              ))}
+                            </p>
+                            <div className="run-ms" title={x.milestones}>
+                              <Milestones pulls={v.milestonePulls} />
+                            </div>
+                          </>
+                        )}
+                        {v.arcPulls > 0 && (
+                          <p className="run-line">
+                            <span className="run-label">Arc</span>
+                            <span className="rc">{x.arc(v.arcPulls)}</span>
+                            {v.arcS.map((a, i) => (
+                              <span key={i} className={'rc ' + (a.featured ? 'rc-s' : 'rc-quiet')} title={a.featured ? 'UP Arc' : undefined}>
+                                {a.featured ? '★ ' : ''}
+                                {a.name} {x.at(a.pity)}
+                              </span>
+                            ))}
+                          </p>
+                        )}
+                      </div>
                     )}
-                    {v.arcPulls > 0 && (
-                      <p className="run-you run-arc">
-                        {x.arc(v.arcPulls)}
-                        {v.arcS.map((a, i) => (
-                          <span key={i} className={a.featured ? 'run-s' : 'run-s-off'}>
-                            {a.name} {x.at(a.pity)}
-                            {a.featured ? ' ★' : ''}
-                          </span>
-                        ))}
-                      </p>
-                    )}
+                    {v.pulls === 0 && v.arcPulls === 0 && v.status !== 'soon' && <p className="muted run-none">{x.none}</p>}
                   </div>
                 </li>
               )

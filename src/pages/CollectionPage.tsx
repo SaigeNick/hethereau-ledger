@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Portrait } from '../components/Portrait'
 import collection from '../data/collection.json'
 import { FEATURED } from '../lib/bannerInfo'
@@ -16,51 +16,81 @@ import { POOL_IDS } from '../lib/types'
 type Kind = 'outfit' | 'car' | 'glider'
 const MILESTONE: Record<Kind, number> = { glider: 50, car: 120, outfit: 200 }
 
+const copiesUk = (n: number) => {
+  const a = n % 10
+  const b = n % 100
+  if (a === 1 && b !== 11) return `${n} копія`
+  if (a >= 2 && a <= 4 && (b < 10 || b >= 20)) return `${n} копії`
+  return `${n} копій`
+}
+
 const TEXT = {
   uk: {
     title: 'Колекція',
-    lead: 'Які персонажі є і скільки в них копій, а також скіни з лімітованих банерів. Рахується з історії круток і порогів 50/120/200; що історія не бачить (картки вибору, подарунки), додайте вручну.',
+    lead: 'Персонажі з рівнем пробудження та скіни з лімітованих банерів. Усе рахується з історії круток і порогів 50/120/200. Те, чого історія не бачить (картки вибору, подарунки), можна виправити вручну: натисніть на персонажа чи скін.',
     chars: 'Персонажі',
     skins: 'Скіни',
-    owned: (n: number, t: number) => `Є ${n} з ${t}`,
     none: 'Немає',
-    copies: (n: number) => (n === 1 ? '1 копія' : n >= 2 && n <= 4 ? `${n} копії` : `${n} копій`),
-    dupes: (n: number) => `+${n} дубл${n === 1 ? 'ь' : n <= 4 ? 'і' : 'ів'}`,
-    plus: 'Додати копію',
-    minus: 'Прибрати копію',
-    manual: (n: number) => `вручну ${n > 0 ? '+' : ''}${n}`,
+    awaken: (l: number) => `Пробудження ${l}`,
+    extra: (n: number) => `+${n} Mind Shard`,
+    manualTag: 'вручну',
+    edit: 'Змінити рівень пробудження',
+    editTitle: 'Рівень пробудження',
+    fromHistory: (n: number) => (n ? `В історії круток: ${copiesUk(n)}.` : 'В історії круток цього персонажа немає.'),
+    levelHint: 'Пробудження 0 — персонаж без дублікатів. Кожен дублікат стає Mind Shard і дає +1 рівень, максимум 6.',
+    reset: 'Як в історії',
+    done: 'Готово',
     kinds: { outfit: 'Вбрання', car: 'Скін авто', glider: 'Глайдер' } as Record<Kind, string>,
     how: { history: 'з круток', milestone: 'за поріг', manual: 'вручну' },
-    toggle: 'Натисніть, щоб змінити',
+    toggle: 'Натисніть, щоб позначити, є чи немає',
     filterAll: 'Усі',
     filterHave: 'Є',
     filterMissing: 'Немає',
   },
   en: {
     title: 'Collection',
-    lead: 'Which characters you have and how many copies, plus the skins from limited banners. Counted from pull history and the 50/120/200 milestones; add what history can’t see (selector cards, gifts) by hand.',
+    lead: 'Characters with their Awakening level, plus the skins from limited banners. Everything is counted from your pull history and the 50/120/200 milestones. Fix what history can’t see (selector cards, gifts) by hand: tap a character or a skin.',
     chars: 'Characters',
     skins: 'Skins',
-    owned: (n: number, t: number) => `${n} of ${t} owned`,
     none: 'Not owned',
-    copies: (n: number) => `${n} cop${n === 1 ? 'y' : 'ies'}`,
-    dupes: (n: number) => `+${n} dupe${n === 1 ? '' : 's'}`,
-    plus: 'Add a copy',
-    minus: 'Remove a copy',
-    manual: (n: number) => `by hand ${n > 0 ? '+' : ''}${n}`,
-    kinds: { outfit: 'Outfit', car: 'Car skin', glider: 'Glider' } as Record<Kind, string>,
+    awaken: (l: number) => `Awakening Lvl ${l}`,
+    extra: (n: number) => `+${n} Mind Shard${n === 1 ? '' : 's'}`,
+    manualTag: 'by hand',
+    edit: 'Change Awakening level',
+    editTitle: 'Awakening level',
+    fromHistory: (n: number) => (n ? `Pull history: ${n} cop${n === 1 ? 'y' : 'ies'}.` : 'This character is not in your pull history.'),
+    levelHint: 'Awakening Lvl 0 is the character with no duplicates. Each duplicate becomes a Mind Shard and adds one level, up to 6.',
+    reset: 'Match history',
+    done: 'Done',
+    kinds: { outfit: 'Outfit', car: 'Livery', glider: 'Glider' } as Record<Kind, string>,
     how: { history: 'from pulls', milestone: 'milestone', manual: 'by hand' },
-    toggle: 'Tap to change',
+    toggle: 'Tap to mark as owned or not',
     filterAll: 'All',
     filterHave: 'Owned',
     filterMissing: 'Missing',
   },
 }
 
+const MAX_AWAKEN = 6
+/** Awakening level from copies: the first copy is level 0, each duplicate adds one, up to 6. */
+const levelOf = (copies: number) => (copies > 0 ? Math.min(copies - 1, MAX_AWAKEN) : -1)
+
+function Pips({ level }: { level: number }) {
+  return (
+    <span className="pips" aria-hidden="true">
+      {Array.from({ length: MAX_AWAKEN }, (_, i) => (
+        <i key={i} className={i < level ? 'is-on' : ''} />
+      ))}
+    </span>
+  )
+}
+
 export function CollectionPage() {
   const { lang } = useI18n()
   const x = TEXT[lang]
-  const { active, adjustCharacter, setSkin } = useStore()
+  const { active, setCharacterManual, setSkin } = useStore()
+  const [editing, setEditing] = useState<string | null>(null)
+  const dialog = useRef<HTMLDialogElement>(null)
   const [tab, setTab] = useState<'chars' | 'skins'>('chars')
   const [filter, setFilter] = useState<'all' | 'have' | 'missing'>('all')
 
@@ -101,6 +131,14 @@ export function CollectionPage() {
     return [...groups.entries()].map(([char, items]) => ({ char, name: lookup(char)?.name ?? char, items }))
   }, [all, active.records.Lottery_LimitedCharacter, active.collection, x.how])
 
+  const current = editing ? chars.find((c) => c.id === editing) : undefined
+  useEffect(() => {
+    const d = dialog.current
+    if (!d) return
+    if (editing && !d.open) d.showModal?.()
+    if (!editing && d.open) d.close()
+  }, [editing])
+
   const ownedChars = chars.filter((c) => c.total > 0).length
   const skinTotal = skins.reduce((a, g) => a + g.items.length, 0)
   const skinOwned = skins.reduce((a, g) => a + g.items.filter((i) => i.owned).length, 0)
@@ -134,33 +172,86 @@ export function CollectionPage() {
         <ul className="char-grid">
           {chars
             .filter((c) => keep(c.total > 0))
-            .map((c) => (
-              <li key={c.id} className={'char-card' + (c.total > 0 ? ' is-owned' : '')}>
-                <Portrait id={c.id} name={c.name} rank={c.rank} size={72} />
-                <p className="char-name">{c.name}</p>
-                <p className="char-copies">
-                  {c.total > 0 ? (
-                    <>
-                      <strong>{x.copies(c.total)}</strong>
-                      {c.total > 1 && <span className="muted"> · {x.dupes(c.total - 1)}</span>}
-                    </>
-                  ) : (
-                    <span className="muted">{x.none}</span>
-                  )}
-                </p>
-                {c.manual !== 0 && <p className="muted small">{x.manual(c.manual)}</p>}
-                <div className="stepper">
-                  <button type="button" aria-label={`${x.minus}: ${c.name}`} disabled={c.total === 0} onClick={() => adjustCharacter(c.id, -1)}>
-                    −
+            .map((c) => {
+              const level = levelOf(c.total)
+              return (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    className={'char-card' + (c.total > 0 ? ' is-owned' : '')}
+                    aria-label={`${c.name}: ${level >= 0 ? x.awaken(level) : x.none}. ${x.edit}`}
+                    onClick={() => setEditing(c.id)}
+                  >
+                    <Portrait id={c.id} name={c.name} rank={c.rank} size={64} />
+                    <span className="char-name">{c.name}</span>
+                    {level >= 0 ? (
+                      <>
+                        <Pips level={level} />
+                        <span className="char-level">{x.awaken(level)}</span>
+                      </>
+                    ) : (
+                      <span className="char-level muted">{x.none}</span>
+                    )}
+                    {(c.total > MAX_AWAKEN + 1 || c.manual !== 0) && (
+                      <span className="char-extra muted">
+                        {c.total > MAX_AWAKEN + 1 && x.extra(c.total - MAX_AWAKEN - 1)}
+                        {c.total > MAX_AWAKEN + 1 && c.manual !== 0 && ' · '}
+                        {c.manual !== 0 && x.manualTag}
+                      </span>
+                    )}
                   </button>
-                  <button type="button" aria-label={`${x.plus}: ${c.name}`} onClick={() => adjustCharacter(c.id, 1)}>
-                    +
-                  </button>
-                </div>
-              </li>
-            ))}
+                </li>
+              )
+            })}
         </ul>
       )}
+
+      <dialog ref={dialog} className="modal" aria-labelledby="awaken-title" onClose={() => setEditing(null)} onClick={(e) => e.target === e.currentTarget && setEditing(null)}>
+        {current && (
+          <div className="modal-body">
+            <div className="modal-head">
+              <Portrait id={current.id} name={current.name} rank={current.rank} size={56} />
+              <div>
+                <h2 id="awaken-title">{current.name}</h2>
+                <p className="muted">{x.editTitle}</p>
+              </div>
+            </div>
+            <div className="level-grid" role="radiogroup" aria-label={x.editTitle}>
+              {[-1, 0, 1, 2, 3, 4, 5, 6].map((l) => {
+                const on = levelOf(current.total) === l
+                return (
+                  <button
+                    key={l}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    className={'level' + (on ? ' is-on' : '') + (l < 0 ? ' is-none' : '')}
+                    onClick={() => {
+                      const target = l < 0 ? 0 : l === MAX_AWAKEN ? Math.max(MAX_AWAKEN + 1, current.total) : l + 1
+                      setCharacterManual(current.id, target - current.fromHistory)
+                    }}
+                  >
+                    {l < 0 ? x.none : l}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="small muted">
+              {x.fromHistory(current.fromHistory)} {x.levelHint}
+            </p>
+            <div className="modal-actions">
+              {current.manual !== 0 && (
+                <button type="button" className="btn btn--ghost" onClick={() => setCharacterManual(current.id, 0)}>
+                  {x.reset}
+                </button>
+              )}
+              <button type="button" className="btn" onClick={() => setEditing(null)}>
+                {x.done}
+              </button>
+            </div>
+          </div>
+        )}
+      </dialog>
 
       {tab === 'skins' && (
         <div className="skin-groups">

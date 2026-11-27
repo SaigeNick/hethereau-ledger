@@ -30,9 +30,11 @@ export function OverviewPage() {
 
   return (
     <>
-      <h1 className="page-title">{active.name || t('overview.title')}</h1>
+      <div className="page-head">
+        <h1>{active.name || t('overview.title')}</h1>
+        <ShareCard profile={active} />
+      </div>
       <GlobalCard profile={active} />
-      <ShareCard profile={active} />
       <OverviewBody records={active.records} base="" />
     </>
   )

@@ -9,11 +9,11 @@ const MIN_PLAYERS = 10
 const TEXT = {
   uk: {
     title: 'Серед гравців',
-    luckier: (p: number) => `Ти удачливіший за ${p}% гравців`,
-    unluckier: (p: number) => `Удачливіші за тебе ${p}% гравців`,
-    noS: 'Вибий першу S, і тут з’явиться твоє місце серед гравців',
+    luckier: (p: number) => `Вам щастить більше, ніж ${p}% гравців`,
+    unluckier: (p: number) => `${p}% гравців щастить більше, ніж вам`,
+    noS: 'Отримайте першого S-персонажа, і тут з’явиться ваше місце серед гравців',
     few: (n: number) => `Поки замало даних для порівняння: ${n} з ${MIN_PLAYERS} гравців`,
-    yours: 'Твій середній гарант S',
+    yours: 'Ваш середній гарант S',
     theirs: 'Середній у спільноти',
     players: 'Гравців',
     foot: 'Лімітовані банери. Анонімно: на сервер ідуть лише числа.',
@@ -81,7 +81,7 @@ export function GlobalCard({ profile }: { profile: Profile }) {
         )}
         <div>
           <dt>{x.players}</dt>
-          <dd>{agg.players.toLocaleString()}</dd>
+          <dd>{agg.players.toLocaleString(lang === 'uk' ? 'uk-UA' : 'en-GB')}</dd>
         </div>
       </dl>
       <p className="muted global-foot">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { rollsUk } from '../lib/plural'
 import { useI18n } from '../lib/i18n'
 import { useStore } from '../lib/store'
 
@@ -41,25 +42,25 @@ const CAT_UK: Record<string, string> = {
 
 const TEXT = {
   uk: {
-    title: 'Ачівки',
-    lead: 'Відмічай отримані ачівки й дивись, скільки Annulith ще можна забрати. Список оновлюється з файлів гри сам; назви й умови — англійською, як у грі.',
+    title: 'Досягнення',
+    lead: 'Відмічайте отримані досягнення й дивіться, скільки Annulith ще можна забрати. Список оновлюється з файлів гри сам; назви й умови англійською, як у грі.',
     loading: 'Завантажую список…',
     progress: (d: number, t: number) => `${d} з ${t}`,
     left: (a: number) => `Ще можна забрати: ${a.toLocaleString('uk-UA')} Annulith`,
-    leftPulls: (n: number) => `≈ ${n} кидків`,
+    leftPulls: (n: number) => `≈ ${rollsUk(n)}`,
     search: 'Пошук за назвою чи умовою',
     all: 'Усі',
-    todo: 'Немає',
-    done: 'Є',
+    todo: 'Не отримані',
+    done: 'Отримані',
     allCats: 'Усі розділи',
     spoilers: 'Показувати приховані',
-    hidden: 'Прихована ачівка',
-    hiddenHint: 'Умову видно після отримання або з увімкненими прихованими',
+    hidden: 'Приховане досягнення',
+    hiddenHint: 'Умову видно після отримання або коли ввімкнено «Показувати приховані»',
     reward: (a: number) => `+${a} Annulith`,
     markAll: 'Відмітити всі в розділі',
     unmarkAll: 'Зняти всі в розділі',
     empty: 'Нічого не знайдено',
-    perProfile: 'Ачівки зберігаються для активного профілю і синхронізуються через Google Drive.',
+    perProfile: 'Досягнення зберігаються для активного профілю і синхронізуються через Google Drive.',
   },
   en: {
     title: 'Achievements',
@@ -67,15 +68,15 @@ const TEXT = {
     loading: 'Loading the list…',
     progress: (d: number, t: number) => `${d} of ${t}`,
     left: (a: number) => `Still to claim: ${a.toLocaleString('en-GB')} Annulith`,
-    leftPulls: (n: number) => `≈ ${n} pulls`,
+    leftPulls: (n: number) => `≈ ${n} rolls`,
     search: 'Search by name or condition',
     all: 'All',
     todo: 'Missing',
-    done: 'Done',
+    done: 'Obtained',
     allCats: 'All sections',
     spoilers: 'Show hidden ones',
     hidden: 'Hidden achievement',
-    hiddenHint: 'The condition shows once you have it, or with hidden ones shown',
+    hiddenHint: 'The condition shows once you have it, or when Show hidden ones is on',
     reward: (a: number) => `+${a} Annulith`,
     markAll: 'Tick all in section',
     unmarkAll: 'Untick all in section',

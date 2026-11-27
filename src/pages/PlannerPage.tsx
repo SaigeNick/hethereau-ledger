@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { resolveAll } from '../lib/dictionary'
+import { pullsUk, rollsUk } from '../lib/plural'
 import { useI18n } from '../lib/i18n'
 import { arcPity } from '../lib/arc'
 import { ANNULITH_PER_ROLL, arcPlan, plan } from '../lib/planner'
@@ -32,53 +33,44 @@ const num = (s: string) => {
   return Number.isFinite(n) && n > 0 ? n : 0
 }
 
-/** Ukrainian plural for "кидок". */
-function rollsUk(n: number) {
-  const a = n % 10
-  const b = n % 100
-  if (a === 1 && b !== 11) return `${n} кидок`
-  if (a >= 2 && a <= 4 && (b < 10 || b >= 20)) return `${n} кидки`
-  return `${n} кидків`
-}
-
 const TEXT = {
   uk: {
     title: 'Калькулятор круток',
-    lead: 'Порахуй, чи вистачить ресурсів забрати персонажа з лімітованого банера. На дошках персонажів немає 50/50, тож кожна S — це персонаж банера.',
+    lead: 'Порахуйте, чи вистачить ресурсів отримати персонажа з лімітованого банера. На дошках персонажів немає 50/50, тож кожен S-персонаж — це персонаж банера.',
     pity: 'Поточний гарант',
-    pityHint: (n: number) => `З твоєї історії: ${n}`,
-    pityNone: 'Круток від останньої S',
+    pityHint: (n: number) => `З вашої історії: ${n}`,
+    pityNone: 'Кидків від останнього S-персонажа',
     annulith: 'Annulith зараз',
-    dice: 'Лімітовані кубики',
+    dice: 'Solid Dice',
     warp: 'Warp Pieces',
-    warpHint: '5 штук = 1 кидок (обмін у магазині)',
+    warpHint: '5 штук = 1 кидок (обмін у Piece Shop)',
     daily: 'Annulith на день (необов’язково)',
     days: 'Днів до кінця банера',
-    copies: 'Скільки копій',
-    copy: (n: number) => (n === 1 ? 'Персонаж' : `+${n - 1} дубл${n === 2 ? 'ь' : 'і'}`),
-    chance: (c: number) => (c === 1 ? 'Шанс забрати персонажа' : `Шанс отримати ${c} копії`),
+    copies: 'Ціль',
+    copy: (n: number) => (n === 1 ? 'Персонаж' : `Пробудження ${n - 1}`),
+    chance: (c: number) => (c === 1 ? 'Шанс отримати персонажа' : `Шанс на пробудження ${c - 1}`),
     rolls: (n: number) => `Вистачить на ${rollsUk(n)}`,
-    guaranteed: 'Гарантовано — ресурсів вистачає до жорсткого гаранту.',
-    missing: (r: number, a: number) => `До гаранту бракує ${rollsUk(r)} — це ≈ ${a.toLocaleString('uk-UA')} Annulith.`,
+    guaranteed: 'Гарантовано: ресурсів вистачає до гаранту.',
+    missing: (r: number, a: number) => `До гаранту бракує ${rollsUk(r)}, це ≈ ${a.toLocaleString('uk-UA')} Annulith.`,
     half: (r: number) => `Для шансу 50% потрібно ${rollsUk(r)}.`,
-    note: `Один кидок — ${ANNULITH_PER_ROLL} Annulith. Шанси: 0,99% на кидок до 70-го, 19,59% з 71-го, 90-й гарантований (дані спільноти, не офіційні). Бонусні нагороди кожні 10 кидків не враховуються.`,
+    note: `Один кидок коштує ${ANNULITH_PER_ROLL} Annulith. Шанси: 0,99% на кидок до 70-го, 19,59% з 71-го, 90-й кидок гарантований (дані спільноти, не офіційні). Бонусні нагороди кожні 10 кидків не враховуються.`,
     more: 'Як працює гача',
   },
   en: {
     title: 'Pull planner',
-    lead: 'Work out whether your resources are enough to get the character from the limited banner. Character boards have no 50/50, so every S is the banner character.',
+    lead: 'Work out whether your resources are enough to get the character from the limited banner. Character boards have no 50/50, so every S-Class character is the banner character.',
     pity: 'Current pity',
     pityHint: (n: number) => `From your history: ${n}`,
-    pityNone: 'Rolls since your last S',
+    pityNone: 'Rolls since your last S-Class character',
     annulith: 'Annulith now',
-    dice: 'Limited dice',
+    dice: 'Solid Dice',
     warp: 'Warp Pieces',
-    warpHint: '5 pieces = 1 pull (shop exchange)',
+    warpHint: '5 pieces = 1 roll (Piece Shop exchange)',
     daily: 'Annulith per day (optional)',
     days: 'Days until the banner ends',
-    copies: 'How many copies',
-    copy: (n: number) => (n === 1 ? 'Character' : `+${n - 1} dupe${n > 2 ? 's' : ''}`),
-    chance: (c: number) => (c === 1 ? 'Chance to get the character' : `Chance to get ${c} copies`),
+    copies: 'Goal',
+    copy: (n: number) => (n === 1 ? 'Character' : `Awakening Lvl ${n - 1}`),
+    chance: (c: number) => (c === 1 ? 'Chance to get the character' : `Chance of Awakening Lvl ${c - 1}`),
     rolls: (n: number) => `Enough for ${n} roll${n === 1 ? '' : 's'}`,
     guaranteed: 'Guaranteed: you have enough to reach hard pity.',
     missing: (r: number, a: number) => `You are ${r} rolls short of guaranteed, about ${a.toLocaleString('en-GB')} Annulith.`,
@@ -211,38 +203,38 @@ const ARC_EMPTY: ArcSaved = { pulls: '', warp: '', copies: 1, sinceS: '', sinceF
 
 const ARC_TEXT = {
   uk: {
-    lead: 'Шанс забрати арку банера. S-арка гарантована за 60 кидків, арка банера — за 80, і гарант переходить між банерами. Кидки йдуть лише по 10.',
-    sinceS: 'Кидків від останньої S-арки',
-    sinceF: 'Кидків від останньої арки банера',
-    fromHistory: (n: number) => `З твоєї історії: ${n}`,
-    noHistory: 'Імпортуй історію Arc, і число підставиться саме',
-    pulls: 'Tri-Keys (Arc-кидків)',
+    lead: 'Шанс отримати UP Arc банера. Arc S-класу гарантовано за 60 круток, UP Arc — за 80, і гарант переходить між банерами. Крутки лише по 10.',
+    sinceS: 'Круток від останнього Arc S-класу',
+    sinceF: 'Круток від останнього UP Arc',
+    fromHistory: (n: number) => `З вашої історії: ${n}`,
+    noHistory: 'Імпортуйте історію Arc, і число підставиться саме',
+    pulls: 'Tri-Key (по 1 на крутку)',
     pullsHint: 'Рахуються десятками: 37 → 30',
-    copies: 'Скільки копій',
-    copy: (n: number) => (n === 1 ? 'Арка' : `+${n - 1} коп${n === 2 ? 'ія' : 'ії'}`),
-    chance: (c: number) => (c === 1 ? 'Шанс забрати арку банера' : `Шанс отримати ${c} копії`),
-    rolls: (n: number) => `Рахуємо ${n} кидків`,
-    guaranteed: 'Гарантовано: вистачає до гаранту арки банера.',
-    missing: (n: number) => `До гаранту бракує ${n} кидків.`,
-    half: (n: number) => `Для шансу 50% потрібно ${n} кидків.`,
-    note: 'Шанси: 3% на S-арку за кидок, 25% із них — арка банера. Гра не публікує, як саме росте шанс ближче до гаранту, тому розрахунок трохи обережніший за реальність.',
+    copies: 'Ціль',
+    copy: (n: number) => (n === 1 ? 'UP Arc' : `${n} копії`),
+    chance: (c: number) => (c === 1 ? 'Шанс отримати UP Arc' : `Шанс отримати ${c} копії UP Arc`),
+    rolls: (n: number) => `Рахуємо ${pullsUk(n)}`,
+    guaranteed: 'Гарантовано: вистачає до гаранту UP Arc.',
+    missing: (n: number) => `До гаранту бракує ${pullsUk(n)}.`,
+    half: (n: number) => `Для шансу 50% потрібно ${pullsUk(n)}.`,
+    note: 'Шанси: 3% на Arc S-класу за крутку, 25% із них — UP Arc. Гра не публікує, як саме росте шанс ближче до гаранту, тому розрахунок трохи обережніший за реальність.',
   },
   en: {
-    lead: 'Chance to get the featured Arc. An S Arc is guaranteed within 60 pulls and the featured Arc within 80, and pity carries over between banners. Pulls come in tens.',
-    sinceS: 'Pulls since your last S Arc',
-    sinceF: 'Pulls since your last featured Arc',
+    lead: 'Chance to get the banner’s UP Arc. An S-Class Arc is guaranteed within 60 pulls and the UP Arc within 80, and pity carries over between banners. Pulls come in tens.',
+    sinceS: 'Pulls since your last S-Class Arc',
+    sinceF: 'Pulls since your last UP Arc',
     fromHistory: (n: number) => `From your history: ${n}`,
     noHistory: 'Import your Arc history and this fills itself in',
-    pulls: 'Tri-Keys (Arc pulls)',
+    pulls: 'Tri-Keys (1 per pull)',
     pullsHint: 'Counted in tens: 37 → 30',
-    copies: 'How many copies',
-    copy: (n: number) => (n === 1 ? 'Arc' : `+${n - 1} cop${n === 2 ? 'y' : 'ies'}`),
-    chance: (c: number) => (c === 1 ? 'Chance to get the featured Arc' : `Chance to get ${c} copies`),
+    copies: 'Goal',
+    copy: (n: number) => (n === 1 ? 'UP Arc' : `${n} copies`),
+    chance: (c: number) => (c === 1 ? 'Chance to get the UP Arc' : `Chance to get ${c} copies of the UP Arc`),
     rolls: (n: number) => `Counting ${n} pulls`,
-    guaranteed: 'Guaranteed: you reach the featured Arc pity.',
+    guaranteed: 'Guaranteed: you reach the UP Arc pity.',
     missing: (n: number) => `${n} pulls short of guaranteed.`,
     half: (n: number) => `A 50% chance takes ${n} pulls.`,
-    note: 'Rates: 3% for an S Arc per pull, 25% of those are the featured Arc. The game does not publish how the rate rises near pity, so this estimate is slightly cautious.',
+    note: 'Rates: 3% for an S-Class Arc per pull, 25% of those are the UP Arc. The game does not publish how the rate rises near pity, so this estimate is slightly cautious.',
   },
 }
 

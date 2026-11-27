@@ -59,8 +59,8 @@ interface StoreApi {
   adoptShare: (shareId: string, snap: SharedSnapshot) => string
   /** Marks achievements done or not on the active profile. */
   setAchievements: (ids: string[], done: boolean) => void
-  /** Adds (or removes, with a negative step) character copies by hand. */
-  adjustCharacter: (id: string, step: number) => void
+  /** Sets the hand correction for a character's copies (added on top of what history shows). */
+  setCharacterManual: (id: string, manual: number) => void
   /** Marks an event skin owned or not; undefined goes back to automatic. */
   setSkin: (id: string, owned: boolean | undefined) => void
 }
@@ -157,11 +157,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit({ ...s, tombstones: bury(s, [id], []), profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
       },
       replaceAll: (s) => commit(normalizeState(s)),
-      adjustCharacter(id, step) {
+      setCharacterManual(id, manual) {
         patch(activeOf(cur()).id, (p) => {
           const chars = { ...(p.collection?.chars ?? {}) }
-          chars[id] = (chars[id] ?? 0) + step
-          if (chars[id] === 0) delete chars[id]
+          if (manual === 0) delete chars[id]
+          else chars[id] = manual
           return { ...p, collection: { ...p.collection, chars } }
         })
       },

@@ -153,7 +153,7 @@ function PoolCard({ s, base, featured }: { s: PoolStats; base: string; featured?
 }
 
 export function OverviewBody({ records, base }: { records: PoolRecords; base: string }) {
-  const { t, fmtDate, lang } = useI18n()
+  const { t, fmtDate, fmtNum, lang } = useI18n()
   const resolved = useMemo(() => Object.fromEntries(POOL_IDS.map((p) => [p, resolveAll(records[p])])) as PoolRecords, [records])
   const stats = useMemo(() => POOL_IDS.map((p) => computeStats(p, resolved[p])), [resolved])
   const banners = useMemo(() => bannerStats(resolved.Lottery_LimitedCharacter, FEATURED), [resolved])
@@ -166,7 +166,7 @@ export function OverviewBody({ records, base }: { records: PoolRecords; base: st
       <dl className="totals">
         <div>
           <dt>{t('totals.pulls')}</dt>
-          <dd>{paid.toLocaleString()}</dd>
+          <dd>{fmtNum(paid)}</dd>
         </div>
         <div>
           <dt>{t('totals.s')}</dt>
@@ -174,7 +174,7 @@ export function OverviewBody({ records, base }: { records: PoolRecords; base: st
         </div>
         <div>
           <dt>{t('totals.annulith')}</dt>
-          <dd>{(paid * ANNULITH_PER_PULL).toLocaleString()}</dd>
+          <dd>{fmtNum(paid * ANNULITH_PER_PULL)}</dd>
         </div>
         <div title={t('totals.valueNote')}>
           <dt>{t('totals.value')}</dt>
@@ -343,12 +343,6 @@ export function BannerBody({
                 A
               </button>
             </div>
-            {hasBonus && (
-              <label className="check bonus-toggle">
-                <input type="checkbox" checked={showBonus} onChange={(e) => setShowBonus(e.target.checked)} />
-                <span>{t('banner.showBonus')}</span>
-              </label>
-            )}
             <div className="seg" role="group" aria-label={t('view.label')}>
               <button aria-pressed={view === 'tiles'} onClick={() => setView('tiles')}>
                 {t('view.tiles')}
@@ -357,6 +351,12 @@ export function BannerBody({
                 {t('view.table')}
               </button>
             </div>
+            {hasBonus && (
+              <label className="check bonus-toggle">
+                <input type="checkbox" checked={showBonus} onChange={(e) => setShowBonus(e.target.checked)} />
+                <span>{t('banner.showBonus')}</span>
+              </label>
+            )}
           </div>
 
           {view === 'tiles' ? (
