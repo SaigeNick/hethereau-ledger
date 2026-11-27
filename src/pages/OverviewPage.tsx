@@ -1,24 +1,13 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Navigate } from 'react-router-dom'
 import { hasAnyRecords, OverviewBody } from '../components/PoolViews'
-import { demoFiles } from '../lib/demo'
+import { loadDemo } from '../lib/demoLoader'
 import { useI18n } from '../lib/i18n'
-import { parseExport } from '../lib/importer'
 import { useStore } from '../lib/store'
-
-export function loadDemo(store: ReturnType<typeof useStore>) {
-  // Start the demo from scratch so it always shows the latest sample data.
-  const old = store.state.profiles.find((p) => p.gameUid === 'demo')
-  if (old) store.deleteProfile(old.id)
-  let id = ''
-  for (const f of demoFiles()) id = store.importParsed(parseExport(f)).profileId
-  // Demo data lives in its own named profile, away from real accounts.
-  if (id) store.updateProfile(id, { name: 'Demo' })
-}
 
 export function OverviewPage() {
   const { t } = useI18n()
-  const store = useStore()
-  const { active } = store
+  const { active } = useStore()
 
   if (!hasAnyRecords(active.records)) {
     return (
@@ -29,9 +18,9 @@ export function OverviewPage() {
           <Link className="btn" to="/import">
             {t('overview.empty.import')}
           </Link>
-          <button className="btn btn--ghost" onClick={() => loadDemo(store)}>
-            {t('overview.empty.demo')}
-          </button>
+          <Link className="btn btn--ghost" to="/guide">
+            {t('nav.guide')}
+          </Link>
         </div>
       </div>
     )
@@ -43,4 +32,14 @@ export function OverviewPage() {
       <OverviewBody records={active.records} base="" />
     </>
   )
+}
+
+/** Hidden route for testing with sample data: #/demo */
+export function DemoPage() {
+  const store = useStore()
+  useEffect(() => {
+    loadDemo(store)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return <Navigate to="/" replace />
 }

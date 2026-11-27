@@ -1149,3 +1149,325 @@ h2.spaced {
   padding-top: 32px;
   border-top: 1px solid var(--line);
 }
+
+/* ---------- Overview v2 ---------- */
+.small {
+  font-size: 0.86rem;
+}
+.totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 28px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.totals > div {
+  padding: 14px 16px 14px 0;
+}
+.totals > div + div {
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+}
+.totals dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.totals dd {
+  margin: 4px 0 0;
+  font: 700 clamp(1.3rem, 4vw, 1.9rem) var(--display);
+  font-variant-numeric: tabular-nums;
+}
+
+.current-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  padding: 22px;
+  margin-bottom: 18px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 181, 71, 0.35);
+  background:
+    radial-gradient(420px 200px at 0% 50%, rgba(255, 181, 71, 0.12), transparent 70%),
+    var(--night-2);
+}
+.current-banner .portrait {
+  box-shadow: 0 0 22px rgba(255, 181, 71, 0.35);
+}
+.cb-main h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  margin: 2px 0 4px;
+}
+.cb-main p {
+  margin: 0;
+}
+.cb-pulls strong {
+  font: 700 1.4rem var(--display);
+  color: var(--teal);
+}
+.ms-labelled {
+  max-width: 520px;
+}
+.ms-labelled .milestones {
+  margin: 12px 0 10px;
+}
+.ms-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.ms-legend strong {
+  font: 700 0.9rem var(--display);
+  color: var(--ink);
+}
+.ms-legend li.is-done,
+.ms-legend li.is-done strong {
+  color: var(--sodium);
+}
+
+.pool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.pool-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 20px;
+  border-radius: var(--r-md);
+  background: var(--night-2);
+  border: 1px solid var(--line);
+}
+.pool-card.is-featured {
+  grid-column: 1 / -1;
+}
+.pool-card.is-empty {
+  opacity: 0.75;
+}
+.pool-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pool-card h2 {
+  margin: 0;
+}
+.pool-card .pity-number {
+  align-items: flex-end;
+  text-align: right;
+}
+.pool-card .btn {
+  justify-self: start;
+}
+.mini-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+}
+.mini-stats dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.mini-stats dd {
+  margin: 2px 0 0;
+  font: 700 1.25rem var(--display);
+  font-variant-numeric: tabular-nums;
+}
+.mini-stats dd.is-lucky {
+  color: var(--teal);
+}
+.mini-stats dd.is-unlucky {
+  color: var(--bad);
+}
+.recent-s {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.recent-s li {
+  position: relative;
+}
+.recent-pity {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 22px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--night);
+  border: 1px solid var(--sodium);
+  color: var(--sodium);
+  font: 700 0.7rem/18px var(--display);
+  text-align: center;
+}
+.all-banners {
+  margin-top: 40px;
+}
+
+/* ---------- Banner page tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 36px 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.tabs button {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 10px 16px;
+  color: var(--muted);
+  font: 600 1rem var(--body);
+  cursor: pointer;
+}
+.tabs button[aria-selected='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--pink);
+}
+.tabs button:hover {
+  color: var(--ink);
+}
+.history-section .section-head {
+  margin-bottom: 16px;
+}
+.btn.more {
+  margin-top: 18px;
+}
+
+/* ---------- Reward tiles, like the game's result screen ---------- */
+.sessions {
+  display: grid;
+  gap: 18px;
+}
+.session header {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.session.has-s header > span:first-child {
+  color: var(--sodium);
+}
+.rtiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rtile {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 7px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(165deg, #262d52, #1b2140);
+  border: 1px solid var(--line);
+}
+.rtile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rtile-txt {
+  font: 700 0.78rem var(--display);
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.tile-rank-S {
+  background: linear-gradient(165deg, #f7b245, #6e4310);
+  border-color: var(--sodium);
+  box-shadow: 0 0 10px rgba(255, 181, 71, 0.45);
+}
+.tile-rank-S .rtile-txt {
+  color: #2b1904;
+}
+.tile-rank-A {
+  background: linear-gradient(165deg, #8b67f0, #2d1f63);
+  border-color: rgba(178, 140, 255, 0.8);
+}
+.tile-rank-A .rtile-txt {
+  color: #efe7ff;
+}
+.tile-rank-B {
+  background: linear-gradient(165deg, #3d6bc4, #1a2a55);
+  border-color: rgba(111, 154, 230, 0.6);
+}
+.tile-rank-B .rtile-txt {
+  color: #dce7ff;
+}
+.rtile.is-bonus {
+  border: 1px dashed var(--teal);
+}
+.rtile-pity,
+.rtile-qty {
+  position: absolute;
+  bottom: 2px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(10, 12, 28, 0.82);
+  font: 700 0.66rem/15px var(--display);
+}
+.rtile-pity {
+  left: 2px;
+  color: var(--sodium);
+}
+.tile-rank-A .rtile-pity {
+  color: #d9c8ff;
+}
+.rtile-qty {
+  right: 2px;
+  color: var(--ink);
+}
+.rtile-bonus {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  color: var(--teal);
+  font: 700 0.8rem var(--display);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 760px) {
+  .pool-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .current-banner {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: 14px;
+  }
+}
+@media (max-width: 600px) {
+  .rtile {
+    width: 50px;
+    height: 50px;
+  }
+  .totals dd {
+    font-size: 1.15rem;
+  }
+  .totals > div,
+  .totals > div + div {
+    padding: 12px 8px;
+  }
+  .totals > div:first-child {
+    padding-left: 0;
+  }
+}

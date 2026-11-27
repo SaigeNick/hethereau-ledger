@@ -5,15 +5,13 @@ import { useI18n } from '../lib/i18n'
 import { ImportError, parseExport } from '../lib/importer'
 import { newId, useStore } from '../lib/store'
 import { POOL_IDS, type PoolId, type PullRecord } from '../lib/types'
-import { loadDemo } from './OverviewPage'
 import { SyncImport } from '../components/SyncImport'
 
 type Line = { ok: boolean; text: string }
 
 export function ImportPage() {
   const { t } = useI18n()
-  const store = useStore()
-  const { importParsed } = store
+  const { importParsed } = useStore()
   const [lines, setLines] = useState<Line[]>([])
   const [over, setOver] = useState(false)
   const input = useRef<HTMLInputElement>(null)
@@ -108,12 +106,6 @@ export function ImportPage() {
         </ul>
       )}
 
-      <p>
-        <button className="btn btn--ghost" onClick={() => loadDemo(store)}>
-          {t('import.demo')}
-        </button>
-      </p>
-      <p className="note muted">{t('import.demoNote')}</p>
 
       <ManualForm />
     </div>
