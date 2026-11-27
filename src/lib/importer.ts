@@ -1,4 +1,4 @@
-import { POOL_IDS, type PoolId, type PullRecord, type Rank } from './types'
+import { POOL_IDS, type PoolId, type PoolRecords, type PullRecord, type Rank } from './types'
 
 export interface ParsedExport {
   pool: PoolId
@@ -68,13 +68,78 @@ export function parseExport(text: string): ParsedExport {
   }
 }
 
-/** Merge by uid; incoming rows win so decoder fixes refresh names and ranks. */
+/**
+ * Game time as the exporter writes it: the record's ticks read as UTC.
+ * Sync used to convert to the browser's zone, which put the same pull
+ * one or two hours away from its exporter copy.
+ */
+export function ticksToTime(t: bigint): string {
+  const d = new Date(Number((t - 621_355_968_000_000_000n) / 10_000n))
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`
+}
+
+/** Sync records carry their ticks in the uid: "<pool>:<ticks>:<ord>". */
+const SYNC_UID = /^[A-Za-z_]+:(\d{15,}):\d+$/
+
+/** Rewrites the time of sync records from their ticks, so old local-time rows line up with exporter rows. */
+function fixTime(r: PullRecord): PullRecord {
+  if (r.manual) return r
+  const m = SYNC_UID.exec(r.uid)
+  if (!m) return r
+  const time = ticksToTime(BigInt(m[1]))
+  return time === r.time ? r : { ...r, time }
+}
+
+/** One slot in the game's history: the same pull from the command and from the exporter shares it. */
+function slotOf(r: PullRecord) {
+  return r.manual ? `m:${r.uid}` : `${r.pool}|${r.time}|${r.ord}`
+}
+
+/** Keeps the newer copy, but holds on to what only the other one knows. */
+function combine(old: PullRecord, next: PullRecord): PullRecord {
+  return {
+    ...old,
+    ...next,
+    // The sync uid comes back on every sync, so keep it as the one id.
+    uid: SYNC_UID.test(old.uid) ? old.uid : next.uid,
+    banner: next.banner ?? old.banner,
+    rank: next.rank !== '?' ? next.rank : old.rank,
+    name: next.name && next.name !== next.rewardId ? next.name : old.name || next.name,
+  }
+}
+
+/** Fixes times and folds copies of the same pull into one. */
+export function normalizeRecords(records: PullRecord[]): PullRecord[] {
+  const map = new Map<string, PullRecord>()
+  let changed = false
+  for (const raw of records) {
+    const r = fixTime(raw)
+    if (r !== raw) changed = true
+    const k = slotOf(r)
+    const prev = map.get(k)
+    if (prev) changed = true
+    map.set(k, prev ? combine(prev, r) : r)
+  }
+  return changed ? sortChrono([...map.values()]) : records
+}
+
+export function normalizePools(records: PoolRecords): PoolRecords {
+  const out = { ...records }
+  for (const id of POOL_IDS) out[id] = normalizeRecords(out[id] ?? [])
+  return out
+}
+
+/** Merge by slot (pool, time, order); incoming rows win so decoder fixes refresh names and ranks. */
 export function mergeRecords(existing: PullRecord[], incoming: PullRecord[]) {
-  const map = new Map(existing.map((r) => [r.uid, r]))
+  const map = new Map(normalizeRecords(existing).map((r) => [slotOf(r), r]))
   let added = 0
-  for (const r of incoming) {
-    if (!map.has(r.uid)) added++
-    map.set(r.uid, r)
+  for (const raw of incoming) {
+    const r = fixTime(raw)
+    const k = slotOf(r)
+    const prev = map.get(k)
+    if (!prev) added++
+    map.set(k, prev ? combine(prev, r) : r)
   }
   return { records: sortChrono([...map.values()]), added, duplicates: incoming.length - added }
 }

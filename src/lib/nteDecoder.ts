@@ -1,4 +1,5 @@
 import type { PoolId, PullRecord } from './types'
+import { ticksToTime } from './importer'
 
 /**
  * Decodes pull history from the game's own network packets.
@@ -227,12 +228,6 @@ export function assemble(pages: DecodedPage[]): RawRow[][] {
 }
 
 /** .NET ticks (UTC) to the viewer's local "YYYY-MM-DD HH:mm:ss". */
-export function ticksToLocal(t: bigint): string {
-  const ms = Number((t - 621_355_968_000_000_000n) / 10_000n)
-  const d = new Date(ms)
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
-}
 
 function poolOf(row: RawRow): PoolId {
   if (row.kind === 'fork') return 'Arc_MiracleBox'
@@ -253,7 +248,7 @@ export function toRecords(rows: RawRow[]): PullRecord[] {
     out.push({
       uid: `${pool}:${r.ticks}:${ord}`,
       pool,
-      time: ticksToLocal(r.ticks),
+      time: ticksToTime(r.ticks),
       ord,
       kind: r.kind === 'fork' ? 'arc' : r.kind === 'gashapon' ? 'gashapon' : r.roll > 0 ? 'dice' : r.roll === 0 ? 'points_gift' : 'chase_reward',
       rewardType: 'item',

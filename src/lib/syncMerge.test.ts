@@ -7,7 +7,7 @@ const rec = (uid: string, time: string): PullRecord => ({
 })
 const prof = (id: string, uids: string[], extra: Partial<Profile> = {}): Profile => ({
   id, name: id, updatedAt: '2026-01-01T00:00:00Z',
-  records: { ...emptyRecords(), Lottery_LimitedCharacter: uids.map((u, i) => rec(u, `2026-01-0${i + 1} 10:00:00`)) },
+  records: { ...emptyRecords(), Lottery_LimitedCharacter: uids.map((u) => rec(u, `2026-01-01 10:00:${u.padStart(2, '0')}`)) },
   ...extra,
 })
 const st = (profiles: Profile[], tomb?: StoreState['tombstones']): StoreState => ({ version: 1, activeId: profiles[0].id, profiles, tombstones: tomb })

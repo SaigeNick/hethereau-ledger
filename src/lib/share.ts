@@ -1,3 +1,4 @@
+import { normalizePools } from './importer'
 import { emptyRecords, POOL_IDS, type Profile, type SharedSnapshot } from './types'
 
 /** Talks to the Cloudflare Pages Function in /functions/api/share. */
@@ -49,7 +50,7 @@ export async function fetchShare(id: string): Promise<SharedSnapshot | null> {
     const rows = data?.records?.[pool]
     if (Array.isArray(rows)) records[pool] = rows.filter((r: unknown) => r && typeof r === 'object' && typeof (r as { uid?: unknown }).uid === 'string')
   }
-  return { v: 1, name: String(data?.name ?? '').slice(0, 40), region: typeof data?.region === 'string' ? data.region : undefined, records, updatedAt: String(data?.updatedAt ?? '') }
+  return { v: 1, name: String(data?.name ?? '').slice(0, 40), region: typeof data?.region === 'string' ? data.region : undefined, records: normalizePools(records), updatedAt: String(data?.updatedAt ?? '') }
 }
 
 export function shareUrl(id: string) {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { mergeRecords, type ParsedExport } from './importer'
+import { mergeRecords, normalizePools, type ParsedExport } from './importer'
 import { emptyRecords, POOL_IDS, type PoolId, type Profile, type PullRecord, type SharedSnapshot, type StoreState } from './types'
 
 const KEY = 'hethereau-ledger.v1'
@@ -15,12 +15,17 @@ function newProfile(name: string): Profile {
   return { id: newId(), name, records: emptyRecords(), updatedAt: new Date().toISOString() }
 }
 
+/** Repairs data saved before the time fix: exporter and sync copies of one pull become one row. */
+export function normalizeState(s: StoreState): StoreState {
+  return { ...s, profiles: s.profiles.map((p) => ({ ...p, records: normalizePools({ ...emptyRecords(), ...p.records }) })) }
+}
+
 function load(): StoreState {
   try {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const s = JSON.parse(raw)
-      if (isStoreState(s) && s.profiles.length) return s
+      if (isStoreState(s) && s.profiles.length) return normalizeState(s)
     }
   } catch {
     /* storage can be blocked; start fresh */
@@ -151,7 +156,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const profiles = rest.length ? rest : [newProfile('')]
         commit({ ...s, tombstones: bury(s, [id], []), profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
       },
-      replaceAll: (s) => commit(s),
+      replaceAll: (s) => commit(normalizeState(s)),
       adjustCharacter(id, step) {
         patch(activeOf(cur()).id, (p) => {
           const chars = { ...(p.collection?.chars ?? {}) }
@@ -181,7 +186,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       adoptShare(shareId, snap) {
         const s = cur()
         const existing = s.profiles.find((p) => p.source === shareId)
-        const records = { ...emptyRecords(), ...snap.records }
+        const records = normalizePools({ ...emptyRecords(), ...snap.records })
         const now = new Date().toISOString()
         if (existing) {
           const updated = { ...existing, name: snap.name || existing.name, region: snap.region, records, updatedAt: now }
