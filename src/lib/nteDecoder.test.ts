@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
 import { resolveAll } from './dictionary'
-import { decodePacket, decodePackets, shiftBits, unpackSync } from './nteDecoder'
+import { assemble, decodePacket, decodePackets, shiftBits, unpackSync } from './nteDecoder'
 import { computeStats } from './stats'
 
 const enc = new TextEncoder()
@@ -92,5 +92,19 @@ describe('nte decoder', () => {
     expect(s.currentPity).toBe(9)
     expect(s.sDrops.every((d) => d.pity <= 90)).toBe(true)
     expect(new Set(recs.map((r) => r.uid)).size).toBe(623)
+  })
+})
+
+describe('assemble across banners', () => {
+  const row = (ticks: bigint, banner: string) => ({ roll: 1, reward: '1', items: [], source: 'x', ticks, banner })
+  it('keeps standard and event pages with the same numbers apart', () => {
+    const pages = [
+      { struct: 'FMonopolyLotteryRecordData', stream: 'aa', page: 1, rows: [row(3n, 'Lottery_YeErMu'), row(2n, 'Lottery_YeErMu')] },
+      { struct: 'FMonopolyLotteryRecordData', stream: 'aa', page: 2, rows: [row(1n, 'Lottery_YeErMu')] },
+      { struct: 'FMonopolyLotteryRecordData', stream: 'aa', page: 1, rows: [row(9n, 'Lottery_Permanent')] },
+      { struct: 'FMonopolyLotteryRecordData', stream: 'aa', page: 2, rows: [row(8n, 'Lottery_Permanent')] },
+    ]
+    const out = assemble(pages)
+    expect(out.map((s) => s.length).sort()).toEqual([2, 3])
   })
 })

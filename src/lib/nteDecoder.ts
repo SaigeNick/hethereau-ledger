@@ -166,7 +166,9 @@ export function assemble(pages: DecodedPage[]): RawRow[][] {
       loose.push(p.rows)
       continue
     }
-    const key = `${p.struct}|${p.stream}`
+    // Standard and event histories can share one stream and reuse page numbers,
+    // so keep them apart by pool or page 1 of one overwrites page 1 of the other.
+    const key = `${p.struct}|${p.stream}|${poolOf(p.rows[0].banner)}`
     if (!streams.has(key)) streams.set(key, new Map())
     streams.get(key)!.set(p.page, p.rows)
   }
