@@ -16,10 +16,10 @@ const RAW = `https://raw.githubusercontent.com/Waifus-Grace/NTE_Assets/${ref}/`
 const TABLES = [
   { path: 'DataTable/Character/DT_Character.json', type: 'character', icon: 'ItemIconBig' },
   { path: 'DataTable/Fork/DT_ForkItemData.json', type: 'arc', icon: 'ItemIcon' },
-  { path: 'DataTable/Inventory/DT_ItemConfig.json', type: 'item' },
-  { path: 'DataTable/Inventory/DT_CapitalItemConfig.json', type: 'item' },
+  { path: 'DataTable/Inventory/DT_ItemConfig.json', type: 'item', icon: 'ItemIcon', onlyIfGacha: true },
+  { path: 'DataTable/Inventory/DT_CapitalItemConfig.json', type: 'item', icon: 'ItemIcon', onlyIfGacha: true },
   { path: 'DataTable/Vehicle/DT_VehicleItemData.json', type: 'vehicle' },
-  { path: 'DataTable/Character/Appearance/DT_AppearanceData.json', type: 'cosmetic' },
+  { path: 'DataTable/Character/Appearance/DT_AppearanceData.json', type: 'cosmetic', icon: 'DisplayIcon', onlyIfGacha: true },
 ]
 
 const QUALITY = { ORANGE: 'S', PURPLE: 'A', BLUE: 'B', GREEN: 'C', WHITE: 'C' }
@@ -44,6 +44,33 @@ function nameOf(field) {
 }
 
 const rewards = {}
+// Items get icons only when a gacha table can hand them out, so the site
+// carries a few dozen pictures instead of thousands.
+async function gachaRewardIds() {
+  const headers = process.env.GITHUB_TOKEN ? { authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}
+  const res = await fetch(`https://api.github.com/repos/Waifus-Grace/NTE_Assets/git/trees/${ref}?recursive=1`, { headers })
+  const paths = res.ok ? (await res.json()).tree.map((x) => x.path) : []
+  const tables = paths.filter((p) => /^DataTable\/(Monopoly|Gacha)\/.*\.json$/.test(p))
+  if (!tables.length) {
+    // Known tables, for when the tree API is rate limited.
+    tables.push(
+      'DataTable/Monopoly/DT_MonopolyCellDataTable.json',
+      'DataTable/Gacha/GachaIllustrate.json',
+      'DataTable/Gacha/DT_LotteryDataTable_Nanali.json',
+    )
+  }
+  const words = new Set()
+  for (const p of tables) {
+    const r = await fetch(RAW + p)
+    if (!r.ok) continue
+    for (const w of (await r.text()).match(/[A-Za-z][A-Za-z0-9_]{3,}/g) ?? []) words.add(w.toLowerCase())
+  }
+  // Rewards seen on the board that the tables name only indirectly.
+  for (const w of ['dice_ticket_01', 'dice_ticket_02', 'dicelimite', 'dicenormal']) words.add(w)
+  return words
+}
+const gachaIds = await gachaRewardIds()
+
 const icons = []
 for (const t of TABLES) {
   const doc = await getJson(t.path)
@@ -56,9 +83,14 @@ for (const t of TABLES) {
     if (rewards[key]) continue // first table wins: characters and Arcs before items
     const rank = QUALITY[quality] ?? 'C'
     rewards[key] = [name, rank, t.type]
-    const iconPath = t.icon && row[t.icon]?.AssetPathName
+    const wantIcon = !t.onlyIfGacha || gachaIds.has(key) || key.startsWith('fashion_')
+    const iconPath = wantIcon && t.icon && (row[t.icon]?.AssetPathName || row.ItemIcon?.AssetPathName || row.DisplayIcon?.AssetPathName || row.ItemIconBig?.AssetPathName)
     if (iconPath && iconPath.startsWith('/Game/UI/UI_Icon/')) {
       icons.push({ key, src: 'UI_Icon/' + iconPath.slice('/Game/UI/UI_Icon/'.length).split('.')[0] + '.png' })
+    }
+    else if (/^fashion_glide_/i.test(id)) {
+      // Some gliders only have their picture in the appearance UI folder.
+      icons.push({ key, src: `UI/Appearance/Glider/${id}.png` })
     }
   }
 }

@@ -22,6 +22,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node scripts/update-rewards.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm test
       - name: Commit if changed
         run: |
