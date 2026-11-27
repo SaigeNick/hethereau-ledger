@@ -51,10 +51,10 @@ function cleanRecords(input: unknown) {
 }
 
 /** Simple per-IP limit on writes, so nobody can flood storage. */
-export async function overLimit(env: Env, request: Request, max = 20) {
+export async function overLimit(env: Env, request: Request, max = 20, scope = 'w') {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
   const hour = Math.floor(Date.now() / 3_600_000)
-  const key = `rl:${await sha256(ip)}:${hour}`
+  const key = `rl:${scope}:${await sha256(ip)}:${hour}`
   const count = Number((await env.SHARES.get(key)) ?? '0')
   if (count >= max) return true
   await env.SHARES.put(key, String(count + 1), { expirationTtl: 3700 })

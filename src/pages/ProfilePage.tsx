@@ -1,4 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { setStatsOptOut, statsOptedOut, withdraw } from '../lib/globalStats'
 import { useI18n } from '../lib/i18n'
 import { createShare, deleteShare, shareUrl, ShareUnavailable, updateShare } from '../lib/share'
 import { isStoreState, useStore } from '../lib/store'
@@ -143,6 +145,8 @@ export function ProfilePage() {
         )}
       </section>
 
+      <StatsToggle />
+
       <section>
         <h2>{t('profile.list')}</h2>
         <ul className="profiles">
@@ -189,5 +193,33 @@ export function ProfilePage() {
         </div>
       </section>
     </div>
+  )
+}
+
+function StatsToggle() {
+  const { t } = useI18n()
+  const { state } = useStore()
+  const [off, setOff] = useState(statsOptedOut)
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash === '#stats') document.getElementById('stats')?.scrollIntoView()
+  }, [hash])
+  return (
+    <section id="stats" className="form">
+      <h2>{t('profile.stats')}</h2>
+      <p className="muted">{t('profile.statsLead')}</p>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={!off}
+          onChange={(e) => {
+            setOff(!e.target.checked)
+            setStatsOptOut(!e.target.checked)
+            if (!e.target.checked) void withdraw(state.profiles)
+          }}
+        />
+        <span>{t('profile.statsOn')}</span>
+      </label>
+    </section>
   )
 }

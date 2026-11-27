@@ -154,7 +154,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Де зберігається моя історія?',
             a: [
-              'Тільки у вашому браузері (localStorage) на цьому пристрої. На наш сервер вона не надсилається, поки ви самі не створите посилання на профіль.',
+              'Тільки у вашому браузері (localStorage) на цьому пристрої. На наш сервер вона не надсилається, поки ви самі не створите посилання на профіль. Для загальної статистики йдуть лише анонімні числа — див. нижче.',
               'Якщо очистити дані браузера, історія зникне. Зробіть резервну копію на сторінці [Профіль](#/profile) — це звичайний файл JSON.',
             ],
           },
@@ -174,6 +174,13 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Я очистив браузер і не можу видалити своє посилання. Що робити?',
             a: ['Напишіть нам ({contact}) і вкажіть посилання — ми видалимо його вручну.'],
+          },
+          {
+            q: 'Як працює «Ти удачливіший за X% гравців»?',
+            a: [
+              'Сайт анонімно надсилає лише числа з лімітованих банерів: скільки кидків і на якому кидку випала кожна S. Без імені, UID чи IP. З них рахуються середні значення спільноти й ваше місце серед гравців.',
+              'Не хочете брати участь — вимкніть це на сторінці [Профіль](#/profile#stats), і ваші числа видаляться.',
+            ],
           },
           {
             q: 'Ви використовуєте cookies, рекламу чи аналітику?',
@@ -273,7 +280,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Where is my history stored?',
             a: [
-              'Only in your browser (localStorage) on this device. It is not sent to our server unless you create a profile link yourself.',
+              'Only in your browser (localStorage) on this device. It is not sent to our server unless you create a profile link yourself. Community stats only receive anonymous numbers; see below.',
               'Clearing your browser data deletes it. Make a backup on the [Profile](#/profile) page; it is a plain JSON file.',
             ],
           },
@@ -293,6 +300,13 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'I cleared my browser and can’t delete my link. What now?',
             a: ['Contact us ({contact}) with the link and we will delete it by hand.'],
+          },
+          {
+            q: 'How does “You’re luckier than X% of players” work?',
+            a: [
+              'The site anonymously sends only numbers from the limited banners: how many rolls and the roll each S came on. No name, UID or IP. Community averages and your place among players are calculated from them.',
+              'If you don’t want to take part, turn it off on the [Profile](#/profile#stats) page and your numbers are deleted.',
+            ],
           },
           {
             q: 'Do you use cookies, ads or analytics?',
@@ -385,7 +399,7 @@ export function FaqPage() {
 const PRIVACY: Record<Lang, Doc> = {
   uk: {
     title: 'Політика конфіденційності',
-    lead: 'Коротко: ми майже нічого не збираємо. Ваша історія живе у вашому браузері, а на сервер потрапляє лише те, чим ви самі вирішили поділитися.',
+    lead: 'Коротко: ми майже нічого не збираємо. Ваша історія живе у вашому браузері. На сервер потрапляють лише анонімні числа для загальної статистики (їх можна вимкнути) і те, чим ви самі вирішили поділитися.',
     sections: [
       {
         id: 'who',
@@ -401,10 +415,10 @@ const PRIVACY: Record<Lang, Doc> = {
           'Сайт зберігає у localStorage вашого браузера:',
           [
             'профілі та історію круток, яку ви імпортували чи додали вручну;',
-            'налаштування: мову, вигляд історії та значення калькулятора;',
+            'налаштування: мову, вигляд історії, значення калькулятора й вибір щодо загальної статистики;',
             'службові ключі посилань на профіль, щоб ви могли їх оновити чи видалити.',
           ],
-          'Ці дані не залишають ваш пристрій, поки ви не створите посилання на профіль. Видалити їх можна на сторінці [Профіль](#/profile) або очистивши дані сайту в налаштуваннях браузера. Це сховище потрібне лише для роботи функцій, якими ви користуєтеся, тому окрема згода на нього не потрібна.',
+          'Сама історія не залишає ваш пристрій, поки ви не створите посилання на профіль. Видалити їх можна на сторінці [Профіль](#/profile) або очистивши дані сайту в налаштуваннях браузера. Це сховище потрібне лише для роботи функцій, якими ви користуєтеся, тому окрема згода на нього не потрібна.',
         ],
       },
       {
@@ -416,10 +430,19 @@ const PRIVACY: Record<Lang, Doc> = {
         ],
       },
       {
+        id: 'stats',
+        title: 'Загальна статистика',
+        body: [
+          'Щоб показати, наскільки ви удачливі порівняно з іншими гравцями, сайт надсилає на сервер лише числа з лімітованих банерів: загальну кількість кидків і номер кидка, на якому випала кожна S. Разом з ними зберігається ідентифікатор — хеш внутрішнього номера вашої першої крутки, щоб повторне надсилання замінювало старі числа, а не дублювало їх. Імені, UID гри та IP-адреси там немає.',
+          'Ці числа зберігаються в Cloudflare і видаляються через 180 днів без оновлень. Показуються лише в зведеному вигляді (кількість гравців, середні значення). Підстава: наш законний інтерес у тому, щоб показувати гравцям загальну статистику.',
+          'Ви можете заперечити будь-коли: вимкніть «Загальна статистика» на сторінці [Профіль](#/profile#stats). Тоді вже надіслані числа видаляться, а нові не надсилатимуться.',
+        ],
+      },
+      {
         id: 'abuse',
         title: 'Захист від зловживань',
         body: [
-          'Щоб ніхто не засмічував сервер, ми рахуємо, скільки посилань створено чи оновлено з однієї IP-адреси за годину. Для цього зберігається не сама адреса, а її хеш SHA-256, і він автоматично видаляється приблизно через годину. Підстава: наш законний інтерес у захисті сервісу.',
+          'Щоб ніхто не засмічував сервер, ми рахуємо, скільки посилань і наборів статистики надіслано з однієї IP-адреси за годину. Для цього зберігається не сама адреса, а її хеш SHA-256, і він автоматично видаляється приблизно через годину. Підстава: наш законний інтерес у захисті сервісу.',
         ],
       },
       {
@@ -472,7 +495,7 @@ const PRIVACY: Record<Lang, Doc> = {
   },
   en: {
     title: 'Privacy policy',
-    lead: 'In short: we collect almost nothing. Your history lives in your browser, and only what you choose to share reaches our server.',
+    lead: 'In short: we collect almost nothing. Your history lives in your browser. Only anonymous numbers for community stats (you can turn them off) and what you choose to share reach our server.',
     sections: [
       {
         id: 'who',
@@ -488,10 +511,10 @@ const PRIVACY: Record<Lang, Doc> = {
           'The site stores in your browser’s localStorage:',
           [
             'your profiles and the pull history you imported or added by hand;',
-            'settings: language, history view and planner values;',
+            'settings: language, history view, planner values and your community stats choice;',
             'the private keys of your profile links, so you can update or delete them.',
           ],
-          'This data does not leave your device unless you create a profile link. You can delete it on the [Profile](#/profile) page or by clearing site data in your browser settings. This storage is only used for features you ask for, so no separate consent is needed.',
+          'The history itself does not leave your device unless you create a profile link. You can delete it on the [Profile](#/profile) page or by clearing site data in your browser settings. This storage is only used for features you ask for, so no separate consent is needed.',
         ],
       },
       {
@@ -503,10 +526,19 @@ const PRIVACY: Record<Lang, Doc> = {
         ],
       },
       {
+        id: 'stats',
+        title: 'Community stats',
+        body: [
+          'To show how lucky you are compared with other players, the site sends only numbers from the limited banners to the server: your total rolls and the roll each S came on. They are stored with an identifier, a hash of your first pull’s internal number, so re-sending replaces your old numbers instead of duplicating them. No name, game UID or IP address is included.',
+          'These numbers are kept in Cloudflare and deleted after 180 days without updates. They are only shown in aggregate (player count, averages). Legal basis: our legitimate interest in showing players community statistics.',
+          'You can object at any time: turn off “Community stats” on the [Profile](#/profile#stats) page. Numbers already sent are then deleted and no new ones are sent.',
+        ],
+      },
+      {
         id: 'abuse',
         title: 'Abuse protection',
         body: [
-          'To stop anyone flooding the server, we count how many links are created or updated from one IP address per hour. We store a SHA-256 hash of the address, not the address itself, and it is deleted automatically after about an hour. Legal basis: our legitimate interest in protecting the service.',
+          'To stop anyone flooding the server, we count how many links and stats updates are sent from one IP address per hour. We store a SHA-256 hash of the address, not the address itself, and it is deleted automatically after about an hour. Legal basis: our legitimate interest in protecting the service.',
         ],
       },
       {

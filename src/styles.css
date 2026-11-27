@@ -1737,3 +1737,40 @@ h2.spaced {
 .since span {
   font-size: 0.8rem;
 }
+
+/* Community stats card */
+.global-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--night-2);
+  padding: 16px 20px;
+  margin: 0 0 28px;
+}
+.global-card p {
+  margin: 0;
+}
+.global-title {
+  font-size: 0.85rem;
+}
+.global-head {
+  font: 700 clamp(1.15rem, 3.6vw, 1.5rem) var(--display);
+  margin-top: 4px !important;
+}
+.global-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 12px 0 10px;
+}
+.global-nums dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.global-nums dd {
+  margin: 2px 0 0;
+  font: 700 1.2rem var(--display);
+  font-variant-numeric: tabular-nums;
+}
+.global-foot {
+  font-size: 0.8rem;
+}
