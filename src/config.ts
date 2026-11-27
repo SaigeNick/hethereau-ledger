@@ -14,4 +14,4 @@ export const CONTACT_EMAIL = 'hethereau.ledger@gmail.com'
  * Google OAuth client ID (Web application) for Google Drive sync. Public by design.
  * Empty = the Drive section is hidden. Scope: drive.appdata (non-sensitive).
  */
-export const GOOGLE_CLIENT_ID = ''
+export const GOOGLE_CLIENT_ID = '235929623176-f00dutg64gtnt7lhg5ao8pn6lm3k3r1d.apps.googleusercontent.com'
