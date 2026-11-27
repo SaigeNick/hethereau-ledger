@@ -6,6 +6,9 @@ import { parseExport } from '../lib/importer'
 import { useStore } from '../lib/store'
 
 export function loadDemo(store: ReturnType<typeof useStore>) {
+  // Start the demo from scratch so it always shows the latest sample data.
+  const old = store.state.profiles.find((p) => p.gameUid === 'demo')
+  if (old) store.deleteProfile(old.id)
   let id = ''
   for (const f of demoFiles()) id = store.importParsed(parseExport(f)).profileId
   // Demo data lives in its own named profile, away from real accounts.

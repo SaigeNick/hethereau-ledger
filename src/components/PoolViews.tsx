@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { RULES } from '../lib/banners'
+import { isBonus, RULES } from '../lib/banners'
 import { resolveAll } from '../lib/dictionary'
 import { useI18n } from '../lib/i18n'
 import { sortChrono } from '../lib/importer'
@@ -132,7 +132,7 @@ export function BannerBody({
   records = resolveAll(records)
   const rules = RULES[pool]
   const s = useMemo(() => computeStats(pool, records), [pool, records])
-  const [filter, setFilter] = useState<'all' | 'top'>('all')
+  const [filter, setFilter] = useState<'all' | 'top' | 'bonus'>('all')
   const [limit, setLimit] = useState(50)
 
   // Pity at each row, newest first, for the history table.
@@ -147,7 +147,13 @@ export function BannerBody({
     }
     return out.reverse()
   }, [records, rules])
-  const shown = filter === 'all' ? rows : rows.filter((x) => x.r.rank === 'S' || x.r.rank === 'A')
+  const shown =
+    filter === 'all'
+      ? rows
+      : filter === 'bonus'
+        ? rows.filter((x) => isBonus(x.r))
+        : rows.filter((x) => !isBonus(x.r) && (x.r.rank === 'S' || x.r.rank === 'A'))
+  const hasBonus = rows.some((x) => isBonus(x.r))
 
   return (
     <div className="banner">
@@ -225,6 +231,11 @@ export function BannerBody({
             <button aria-pressed={filter === 'top'} onClick={() => setFilter('top')}>
               {t('banner.filter.top')}
             </button>
+            {hasBonus && (
+              <button aria-pressed={filter === 'bonus'} onClick={() => setFilter('bonus')}>
+                {t('banner.filter.bonus')}
+              </button>
+            )}
           </div>
         </div>
         <div className="table-scroll">
@@ -240,10 +251,11 @@ export function BannerBody({
             </thead>
             <tbody>
               {shown.slice(0, limit).map(({ r, pity }) => (
-                <tr key={r.uid} className={`row-${r.rank === '?' ? 'u' : r.rank}`}>
+                <tr key={r.uid} className={isBonus(r) ? 'row-bonus' : `row-${r.rank === '?' ? 'u' : r.rank}`}>
                   <td className="muted nowrap">{r.time.slice(0, 16)}</td>
                   <td>
                     {r.name}
+                    {r.qty && r.qty > 1 ? <span className="muted"> ×{r.qty}</span> : null}
                     {r.manual && <span className="tag">{t('banner.manualTag')}</span>}
                     {(r.kind === 'points_gift' || r.kind === 'chase_reward') && (
                       <span className="tag">{t(`banner.bonus.${r.kind}` as never)}</span>

@@ -87,7 +87,7 @@ describe('import', () => {
     const first = mergeRecords([], files[0].records)
     const again = mergeRecords(first.records, files[0].records)
     expect(again.added).toBe(0)
-    expect(again.records.length).toBe(341)
+    expect(again.records.length).toBe(346)
     const s = computeStats('Lottery_LimitedCharacter', first.records)
     expect(s.totalPulls).toBe(310)
     expect(s.sDrops.every((d) => d.pity <= 90)).toBe(true)

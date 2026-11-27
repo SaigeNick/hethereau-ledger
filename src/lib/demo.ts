@@ -92,6 +92,8 @@ function monopoly(pool: PoolId, groups: number, seed: number, sPool: string[][])
     // The guaranteed A every 10 rolls arrives as a bonus row, not a roll.
     const bonus = rand() < 0.2 ? A_CHARS[Math.floor(rand() * A_CHARS.length)] : ['fork_wuhuakuang', 'The Forgotten']
     rows.push({ roll_result: 0, result_type: 'points_gift', reward_type: rand() < 0.2 ? 'character' : 'arc', reward_id: bonus[0], reward_name: bonus[1], reward_rank: 'A', quantity: 1 })
+    // Now and then the piece catches Nacupeda: a chase bonus of 30 Warp Pieces.
+    if (g % 6 === 4) rows.splice(5, 0, { roll_result: 0, result_type: 'chase_reward', reward_type: 'item', reward_id: 'dice_ticket_01', reward_name: 'Warp Piece', reward_rank: 'S', quantity: 30 })
     if (pool === 'Lottery_LimitedCharacter' && g === 17) rows[3] = { roll_result: 4, result_type: 'dice', reward_type: 'item', reward_id: 'Fashion_1052_1', reward_name: 'Outfit', reward_rank: 'S', quantity: 1 }
     rows.reverse().forEach((r, ord) =>
       records.push({ uid: `demo-${pool}-${g}-${ord}`, pool_group_id: pool, timestamp: time, timestamp_group_ordinal: ord, ...(r as object) }),
