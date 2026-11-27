@@ -1862,3 +1862,9 @@ h2.spaced {
   align-items: center;
   margin-bottom: 12px;
 }
+
+/* One click selects the whole command, for copying by hand. */
+.cmd code {
+  user-select: all;
+  -webkit-user-select: all;
+}
