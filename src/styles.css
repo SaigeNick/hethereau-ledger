@@ -1710,3 +1710,30 @@ h2.spaced {
   margin-top: 28px;
   max-width: 68ch;
 }
+
+.archive-tabs {
+  margin-top: 8px;
+}
+.seg button[aria-selected='true'] {
+  background: var(--night-3);
+  color: var(--ink);
+}
+.runs.chars .run {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+.since {
+  margin: 0;
+  text-align: right;
+  display: grid;
+  line-height: 1.2;
+}
+.since strong {
+  font: 700 1.25rem var(--display);
+  color: var(--sodium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.since span {
+  font-size: 0.8rem;
+}

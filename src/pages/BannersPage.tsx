@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Milestones } from '../components/BannerList'
 import { Portrait } from '../components/Portrait'
@@ -23,6 +23,15 @@ const TEXT = {
     sAt: (p: number) => `S на ${p}-му`,
     none: 'Не крутив',
     milestones: 'Етапи банера (рахуються разом з повторами)',
+    tabTime: 'Хронологія',
+    tabChars: 'Персонажі',
+    charsLead: 'Скільки минуло з останнього банера кожного персонажа. Чим довше, тим ймовірніший повтор.',
+    daysAgo: (n: number) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'день' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'дні' : 'днів'}`,
+    ago: 'тому',
+    inDays: (n: number) => `через ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'день' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'дні' : 'днів'}`,
+    last: 'Востаннє',
+    next: 'Повтор',
+    runs: (n: number) => `${n} ${n === 1 ? 'банер' : n >= 2 && n <= 4 ? 'банери' : 'банерів'}`,
     note: 'Дати взято з офіційних анонсів версій; банер змінюється в день оновлення. Особиста статистика є лише для круток, імпортованих командою синхронізації.',
   },
   en: {
@@ -36,8 +45,43 @@ const TEXT = {
     sAt: (p: number) => `S at ${p}`,
     none: 'Not pulled',
     milestones: 'Banner milestones (shared with reruns)',
+    tabTime: 'Timeline',
+    tabChars: 'Characters',
+    charsLead: 'How long since each character’s last banner. The longer the wait, the likelier a rerun.',
+    daysAgo: (n: number) => `${n} day${n === 1 ? '' : 's'}`,
+    ago: 'ago',
+    inDays: (n: number) => `in ${n} day${n === 1 ? '' : 's'}`,
+    last: 'Last',
+    next: 'Rerun',
+    runs: (n: number) => `${n} banner${n === 1 ? '' : 's'}`,
     note: 'Dates come from official version previews; banners switch on update day. Personal stats only cover pulls imported with the sync command.',
   },
+}
+
+const DAY = 86_400_000
+const days = (from: string, to: string) => Math.round((Date.parse(to + 'T12:00:00') - Date.parse(from + 'T12:00:00')) / DAY)
+
+interface CharView {
+  banner: string
+  last?: BannerRun
+  current?: BannerRun
+  next?: BannerRun
+  count: number
+}
+
+function charViews(now: string): CharView[] {
+  const by = new Map<string, BannerRun[]>()
+  for (const r of RUNS) by.set(r.banner, [...(by.get(r.banner) ?? []), r])
+  return [...by.entries()].map(([banner, runs]) => {
+    const sorted = [...runs].sort((a, b) => (a.start < b.start ? -1 : 1))
+    return {
+      banner,
+      last: [...sorted].reverse().find((r) => r.end <= now),
+      current: sorted.find((r) => r.start <= now && now < r.end),
+      next: sorted.find((r) => now < r.start),
+      count: sorted.filter((r) => r.start <= now).length,
+    }
+  })
 }
 
 const today = () => {
@@ -85,6 +129,21 @@ export function BannersPage() {
   const { active } = useStore()
   const views = useRuns(active.records.Lottery_LimitedCharacter)
 
+  const [tab, setTab] = useState<'time' | 'chars'>(() => {
+    try {
+      return localStorage.getItem('hethereau-ledger.archiveTab') === 'chars' ? 'chars' : 'time'
+    } catch {
+      return 'time'
+    }
+  })
+  const pick = (t: 'time' | 'chars') => {
+    setTab(t)
+    try {
+      localStorage.setItem('hethereau-ledger.archiveTab', t)
+    } catch {
+      /* ignore */
+    }
+  }
   const versions = useMemo(() => {
     const m = new Map<string, RunView[]>()
     for (const v of views) m.set(v.run.version, [...(m.get(v.run.version) ?? []), v])
@@ -97,7 +156,16 @@ export function BannersPage() {
     <article className="archive">
       <h1>{x.title}</h1>
       <p className="lead">{x.lead}</p>
-      {versions.map(([ver, list]) => (
+      <div className="seg archive-tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'time'} className={tab === 'time' ? 'is-on' : ''} onClick={() => pick('time')}>
+          {x.tabTime}
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'chars'} className={tab === 'chars' ? 'is-on' : ''} onClick={() => pick('chars')}>
+          {x.tabChars}
+        </button>
+      </div>
+      {tab === 'chars' && <CharsView />}
+      {tab === 'time' && versions.map(([ver, list]) => (
         <section key={ver}>
           <h2>
             {x.version} {ver}
@@ -147,5 +215,54 @@ export function BannersPage() {
         {x.note} <Link to="/import">{lang === 'uk' ? 'Імпорт' : 'Import'}</Link>
       </p>
     </article>
+  )
+}
+
+function CharsView() {
+  const { lang } = useI18n()
+  const x = TEXT[lang]
+  const now = today()
+  const list = useMemo(() => {
+    const v = charViews(now)
+    const rank = (c: CharView) => (c.current ? -1 : c.last ? days(c.last.end, now) : -2)
+    return v.sort((a, b) => rank(b) - rank(a))
+  }, [now])
+  return (
+    <section>
+      <p className="muted">{x.charsLead}</p>
+      <ol className="runs chars">
+        {list.map((c) => {
+          const id = FEATURED[c.banner] ?? ''
+          const name = lookup(id)?.name ?? c.banner.replace(/^Lottery_/, '')
+          const ref = c.current ?? c.last ?? c.next
+          return (
+            <li key={c.banner} className={'run' + (c.current ? ' is-now' : !c.last ? ' is-soon' : '')}>
+              <Portrait id={id} name={name} rank="S" />
+              <div className="run-main">
+                <p className="run-head">
+                  <strong>{name}</strong>
+                  {c.current && <span className="tag tag-now">{x.now}</span>}
+                  {!c.current && c.next && (
+                    <span className={'tag' + (c.last ? ' tag-rerun' : '')}>
+                      {c.last ? x.next : x.soon} {x.inDays(days(now, c.next.start))}
+                    </span>
+                  )}
+                </p>
+                <p className="muted run-sub">
+                  {ref && `${c.current ? '' : c.last ? x.last + ': ' : ''}${fmtRange(ref, lang)} · ${x.version} ${ref.version}`}
+                  {c.count > 0 && ` · ${x.runs(c.count)}`}
+                </p>
+              </div>
+              {!c.current && c.last && (
+                <p className="since">
+                  <strong>{x.daysAgo(days(c.last.end, now))}</strong>
+                  <span className="muted">{x.ago}</span>
+                </p>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </section>
   )
 }
