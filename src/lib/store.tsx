@@ -54,6 +54,10 @@ interface StoreApi {
   adoptShare: (shareId: string, snap: SharedSnapshot) => string
   /** Marks achievements done or not on the active profile. */
   setAchievements: (ids: string[], done: boolean) => void
+  /** Adds (or removes, with a negative step) character copies by hand. */
+  adjustCharacter: (id: string, step: number) => void
+  /** Marks an event skin owned or not; undefined goes back to automatic. */
+  setSkin: (id: string, owned: boolean | undefined) => void
 }
 
 const Ctx = createContext<StoreApi | null>(null)
@@ -148,6 +152,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit({ ...s, tombstones: bury(s, [id], []), profiles, activeId: profiles.some((p) => p.id === s.activeId) ? s.activeId : profiles[0].id })
       },
       replaceAll: (s) => commit(s),
+      adjustCharacter(id, step) {
+        patch(activeOf(cur()).id, (p) => {
+          const chars = { ...(p.collection?.chars ?? {}) }
+          chars[id] = (chars[id] ?? 0) + step
+          if (chars[id] === 0) delete chars[id]
+          return { ...p, collection: { ...p.collection, chars } }
+        })
+      },
+      setSkin(id, owned) {
+        patch(activeOf(cur()).id, (p) => {
+          const skins = { ...(p.collection?.skins ?? {}) }
+          if (owned === undefined) delete skins[id]
+          else skins[id] = owned
+          return { ...p, collection: { ...p.collection, skins } }
+        })
+      },
       setAchievements(ids, done) {
         patch(activeOf(cur()).id, (p) => {
           const set = new Set(p.achievements ?? [])

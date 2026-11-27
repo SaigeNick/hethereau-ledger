@@ -41,6 +41,7 @@ export function mergeStates(local: StoreState, remote: StoreState): StoreState {
       records,
       // A checklist: a tick on either device counts.
       achievements: [...new Set([...(l.achievements ?? []), ...(r.achievements ?? [])])],
+      collection: newer.collection ?? l.collection ?? r.collection,
       updatedAt: newer.updatedAt,
     }
   }
@@ -67,7 +68,7 @@ export function mergeStates(local: StoreState, remote: StoreState): StoreState {
 /** Content fingerprint, to skip uploads and re-renders when nothing changed. */
 export function stateSig(s: StoreState) {
   return JSON.stringify([
-    s.profiles.map((p) => [p.id, p.name, p.region, p.gameUid, p.source, p.share?.id, (p.achievements ?? []).length, POOL_IDS.map((id) => p.records[id].map((r) => r.uid).join())]),
+    s.profiles.map((p) => [p.id, p.name, p.region, p.gameUid, p.source, p.share?.id, (p.achievements ?? []).length, JSON.stringify(p.collection ?? {}), POOL_IDS.map((id) => p.records[id].map((r) => r.uid).join())]),
     s.tombstones?.profiles.length ?? 0,
     s.tombstones?.records.length ?? 0,
   ])

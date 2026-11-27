@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { resolveAll } from '../lib/dictionary'
 import { useI18n } from '../lib/i18n'
-import { ARC_FEATURED } from '../data/arcBanners'
-import { sortChrono } from '../lib/importer'
+import { arcPity } from '../lib/arc'
 import { ANNULITH_PER_ROLL, arcPlan, plan } from '../lib/planner'
 import type { PullRecord } from '../lib/types'
 import { computeStats } from '../lib/stats'
@@ -13,12 +12,13 @@ const KEY = 'hethereau-ledger.planner'
 interface Saved {
   annulith: string
   dice: string
+  warp: string
   daily: string
   days: string
   copies: number
   pity: string
 }
-const EMPTY: Saved = { annulith: '', dice: '', daily: '', days: '', copies: 1, pity: '' }
+const EMPTY: Saved = { annulith: '', dice: '', warp: '', daily: '', days: '', copies: 1, pity: '' }
 
 function load(): Saved {
   try {
@@ -50,6 +50,8 @@ const TEXT = {
     pityNone: 'Круток від останньої S',
     annulith: 'Annulith зараз',
     dice: 'Лімітовані кубики',
+    warp: 'Warp Pieces',
+    warpHint: '5 штук = 1 кидок (обмін у магазині)',
     daily: 'Annulith на день (необов’язково)',
     days: 'Днів до кінця банера',
     copies: 'Скільки копій',
@@ -70,6 +72,8 @@ const TEXT = {
     pityNone: 'Rolls since your last S',
     annulith: 'Annulith now',
     dice: 'Limited dice',
+    warp: 'Warp Pieces',
+    warpHint: '5 pieces = 1 pull (shop exchange)',
     daily: 'Annulith per day (optional)',
     days: 'Days until the banner ends',
     copies: 'How many copies',
@@ -108,6 +112,7 @@ function CharacterPlanner() {
     pity,
     annulith: num(v.annulith),
     dice: num(v.dice),
+    warp: num(v.warp),
     dailyAnnulith: num(v.daily),
     days: num(v.days),
     copies: v.copies,
@@ -135,6 +140,11 @@ function CharacterPlanner() {
               <input inputMode="numeric" value={v.dice} placeholder="0" onChange={set('dice')} />
             </label>
           </div>
+          <label>
+            <span>{x.warp}</span>
+            <input inputMode="numeric" value={v.warp} placeholder="0" onChange={set('warp')} />
+            <small className="muted">{x.warpHint}</small>
+          </label>
           <div className="form-row">
             <label>
               <span>{x.daily}</span>
@@ -184,29 +194,20 @@ function CharacterPlanner() {
 
 /* ---------------- Arc ---------------- */
 
-/** Pulls since the last S Arc and since the last featured one, oldest first. */
 export function arcCounters(records: PullRecord[]) {
-  let sinceS = 0
-  let sinceF = 0
-  for (const r of sortChrono(resolveAll(records))) {
-    sinceS++
-    sinceF++
-    if (r.rank === 'S') {
-      sinceS = 0
-      if (r.banner && ARC_FEATURED[r.banner] === r.rewardId) sinceF = 0
-    }
-  }
+  const { sinceS, sinceF } = arcPity(records)
   return { sinceS, sinceF }
 }
 
 const ARC_KEY = 'hethereau-ledger.plannerArc'
 interface ArcSaved {
   pulls: string
+  warp: string
   copies: number
   sinceS: string
   sinceF: string
 }
-const ARC_EMPTY: ArcSaved = { pulls: '', copies: 1, sinceS: '', sinceF: '' }
+const ARC_EMPTY: ArcSaved = { pulls: '', warp: '', copies: 1, sinceS: '', sinceF: '' }
 
 const ARC_TEXT = {
   uk: {
@@ -215,7 +216,7 @@ const ARC_TEXT = {
     sinceF: 'Кидків від останньої арки банера',
     fromHistory: (n: number) => `З твоєї історії: ${n}`,
     noHistory: 'Імпортуй історію Arc, і число підставиться саме',
-    pulls: 'Скільки Arc-кидків можеш зробити',
+    pulls: 'Tri-Keys (Arc-кидків)',
     pullsHint: 'Рахуються десятками: 37 → 30',
     copies: 'Скільки копій',
     copy: (n: number) => (n === 1 ? 'Арка' : `+${n - 1} коп${n === 2 ? 'ія' : 'ії'}`),
@@ -232,7 +233,7 @@ const ARC_TEXT = {
     sinceF: 'Pulls since your last featured Arc',
     fromHistory: (n: number) => `From your history: ${n}`,
     noHistory: 'Import your Arc history and this fills itself in',
-    pulls: 'Arc pulls you can make',
+    pulls: 'Tri-Keys (Arc pulls)',
     pullsHint: 'Counted in tens: 37 → 30',
     copies: 'How many copies',
     copy: (n: number) => (n === 1 ? 'Arc' : `+${n - 1} cop${n === 2 ? 'y' : 'ies'}`),
@@ -271,7 +272,7 @@ function ArcPlanner() {
   const set = (k: keyof ArcSaved) => (e: React.ChangeEvent<HTMLInputElement>) => setV({ ...v, [k]: e.target.value })
   const sinceS = v.sinceS !== '' ? Math.min(59, Math.floor(num(v.sinceS))) : hist?.sinceS ?? 0
   const sinceF = v.sinceF !== '' ? Math.min(79, Math.floor(num(v.sinceF))) : hist?.sinceF ?? 0
-  const r = arcPlan({ sinceS: Math.min(sinceS, sinceF), sinceF, pulls: num(v.pulls), copies: v.copies })
+  const r = arcPlan({ sinceS: Math.min(sinceS, sinceF), sinceF, pulls: num(v.pulls), warp: num(v.warp), copies: v.copies })
   const pct = r.chance >= 0.9995 ? 100 : r.chance * 100
   const pctText = pct >= 100 ? '100%' : pct < 0.1 && pct > 0 ? '<0.1%' : `${pct.toFixed(pct < 10 ? 1 : 0)}%`
   return (
@@ -294,6 +295,11 @@ function ArcPlanner() {
             <span>{x.pulls}</span>
             <input inputMode="numeric" value={v.pulls} placeholder="0" onChange={set('pulls')} />
             <small className="muted">{x.pullsHint}</small>
+          </label>
+          <label>
+            <span>{shared.warp}</span>
+            <input inputMode="numeric" value={v.warp} placeholder="0" onChange={set('warp')} />
+            <small className="muted">{shared.warpHint}</small>
           </label>
           <fieldset className="copies">
             <legend>{x.copies}</legend>

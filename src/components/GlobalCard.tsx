@@ -17,7 +17,7 @@ const TEXT = {
     theirs: 'Середній у спільноти',
     players: 'Гравців',
     foot: 'Лімітовані банери. Анонімно: на сервер ідуть лише числа.',
-    off: 'Вимкнути',
+    off: 'Докладніше',
   },
   en: {
     title: 'Among players',
@@ -29,7 +29,7 @@ const TEXT = {
     theirs: 'Community average',
     players: 'Players',
     foot: 'Limited banners. Anonymous: only numbers are sent.',
-    off: 'Turn off',
+    off: 'Details',
   },
 }
 
@@ -85,7 +85,7 @@ export function GlobalCard({ profile }: { profile: Profile }) {
         </div>
       </dl>
       <p className="muted global-foot">
-        {x.foot} <Link to="/profile#stats">{x.off}</Link>
+        {x.foot} <Link to="/privacy">{x.off}</Link>
       </p>
     </section>
   )

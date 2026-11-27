@@ -49,3 +49,10 @@ describe('arc planner', () => {
     expect(arcPlan({ sinceS: 0, sinceF: 23, pulls: 0, copies: 1 }).guarantee).toBe(60)
   })
 })
+
+describe('warp pieces', () => {
+  it('turn every 5 into a pull', () => {
+    expect(plan({ pity: 0, annulith: 0, dice: 0, warp: 23, dailyAnnulith: 0, days: 0, copies: 1 }).rolls).toBe(4)
+    expect(arcPlan({ sinceS: 0, sinceF: 0, pulls: 8, warp: 10, copies: 1 }).rolls).toBe(10)
+  })
+})

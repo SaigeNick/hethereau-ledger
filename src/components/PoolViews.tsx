@@ -1,3 +1,4 @@
+import { arcPity } from '../lib/arc'
 import { ANNULITH_PER_PULL, fmtEur, pullValue } from '../lib/spend'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -9,7 +10,7 @@ import { sortChrono } from '../lib/importer'
 import { bannerStats, computeStats, type PoolStats } from '../lib/stats'
 import { POOL_IDS, type PoolId, type PoolRecords, type PullRecord } from '../lib/types'
 import { BannerList, bannerName, Milestones } from './BannerList'
-import { BoardLegend, PityBoard } from './PityBoard'
+import { PityBoard } from './PityBoard'
 import { PityHistogram } from './PityHistogram'
 import { Portrait } from './Portrait'
 import { countSessions, SessionList, type Row } from './Tiles'
@@ -141,7 +142,7 @@ function PoolCard({ s, base, featured }: { s: PoolStats; base: string; featured?
               </div>
             )}
           </dl>
-          {rules.hardPity && <RecentS s={s} max={featured ? 8 : 5} />}
+          {rules.hardPity && <RecentS s={s} max={featured ? 999 : 5} />}
         </>
       )}
       <Link className={'btn' + (empty ? ' btn--ghost' : '')} to={empty ? '/import' : `${base}/pool/${s.pool}`}>
@@ -243,7 +244,23 @@ export function BannerBody({
   const s = useMemo(() => computeStats(pool, records), [pool, records])
   const [tab, setTab] = useState<Tab>('history')
   const [view, setViewState] = useState<View>(savedView)
-  const [filter, setFilter] = useState<'all' | 'top' | 'bonus'>('all')
+  const [filter, setFilter] = useState<'all' | 'S' | 'A'>('all')
+  const [showBonus, setShowBonusState] = useState(() => {
+    try {
+      return localStorage.getItem('hethereau-ledger.showBonus') !== '0'
+    } catch {
+      return true
+    }
+  })
+  const setShowBonus = (v: boolean) => {
+    setShowBonusState(v)
+    try {
+      localStorage.setItem('hethereau-ledger.showBonus', v ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }
+  const arc = useMemo(() => arcPity(pool === 'Arc_MiracleBox' ? records : []), [pool, records])
   const [limit, setLimit] = useState(20)
   const setView = (v: View) => {
     setViewState(v)
@@ -261,17 +278,17 @@ export function BannerBody({
     for (const r of sortChrono(records)) {
       const pull = rules.isPull(r)
       if (pull) counter++
-      out.push({ r, pity: pull || rules.isTopDrop(r) ? Math.max(counter, 1) : null })
+      const featured = arc.featuredPity.get(r.uid)
+      out.push({ r, pity: featured ?? (pull || rules.isTopDrop(r) ? Math.max(counter, 1) : null) })
       if (rules.isTopDrop(r)) counter = 0
     }
     return out.reverse()
-  }, [records, rules])
-  const shown =
-    filter === 'all'
-      ? rows
-      : filter === 'bonus'
-        ? rows.filter((x) => isBonus(x.r))
-        : rows.filter((x) => !isBonus(x.r) && (x.r.rank === 'S' || x.r.rank === 'A') && x.r.rewardType !== 'item')
+  }, [records, rules, arc])
+  const shown = rows.filter((x) => {
+    if (isBonus(x.r)) return showBonus && (filter === 'all' || x.r.rank === filter)
+    if (filter === 'all') return true
+    return x.r.rank === filter && x.r.rewardType !== 'item'
+  })
   const hasBonus = rows.some((x) => isBonus(x.r))
   const banners = useMemo(() => (pool === 'Lottery_LimitedCharacter' ? bannerStats(records, FEATURED) : []), [pool, records])
   const sessions = view === 'tiles' ? countSessions(shown) : shown.length
@@ -291,12 +308,17 @@ export function BannerBody({
             <strong>{s.currentPity}</strong>
             <span>{t('stat.pityOf', { n: rules.hardPity })}</span>
           </p>
-          <PityBoard current={s.currentPity} max={rules.hardPity} soft={rules.softFrom} cols={rules.trackCols} />
-          <BoardLegend max={rules.hardPity} soft={rules.softFrom} />
+          <PityBoard current={s.currentPity} max={rules.hardPity} soft={rules.softFrom} cols={{ wide: 30, narrow: 30 }} compact />
+          <p className="muted small board-caption">
+            {rules.softFrom ? t('board.captionSoft', { soft: rules.softFrom, max: rules.hardPity }) : t('board.captionHard', { max: rules.hardPity })}
+          </p>
+          {pool === 'Arc_MiracleBox' && (
+            <p className="arc-feat">
+              <strong>{arc.sinceF}</strong> {t('arc.toFeatured')}
+            </p>
+          )}
         </section>
       )}
-
-      <StatRow s={s} />
 
       <div className="tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'history'} onClick={() => setTab('history')}>
@@ -314,15 +336,19 @@ export function BannerBody({
               <button aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>
                 {t('banner.filter.all')}
               </button>
-              <button aria-pressed={filter === 'top'} onClick={() => setFilter('top')}>
-                {t('banner.filter.top')}
+              <button aria-pressed={filter === 'S'} onClick={() => setFilter('S')}>
+                S
               </button>
-              {hasBonus && (
-                <button aria-pressed={filter === 'bonus'} onClick={() => setFilter('bonus')}>
-                  {t('banner.filter.bonus')}
-                </button>
-              )}
+              <button aria-pressed={filter === 'A'} onClick={() => setFilter('A')}>
+                A
+              </button>
             </div>
+            {hasBonus && (
+              <label className="check bonus-toggle">
+                <input type="checkbox" checked={showBonus} onChange={(e) => setShowBonus(e.target.checked)} />
+                <span>{t('banner.showBonus')}</span>
+              </label>
+            )}
             <div className="seg" role="group" aria-label={t('view.label')}>
               <button aria-pressed={view === 'tiles'} onClick={() => setView('tiles')}>
                 {t('view.tiles')}
@@ -387,6 +413,7 @@ export function BannerBody({
 
       {tab === 'stats' && (
         <div role="tabpanel">
+          <StatRow s={s} />
           {rules.consolidatedRate && s.luck !== null && (
             <p className="note muted">{t('luck.note', { rate: (rules.consolidatedRate * 100).toFixed(2) })}</p>
           )}
@@ -402,7 +429,9 @@ export function BannerBody({
                     <span className="drop-name">{d.record.name}</span>
                     <span className="drop-date muted">{fmtDate(d.record.time)}</span>
                     {rules.hardPity && (
-                      <span className={'drop-pity' + (rules.softFrom && d.pity > rules.softFrom ? ' is-late' : '')}>{d.pity}</span>
+                      <span className={'drop-pity' + (rules.softFrom && d.pity > rules.softFrom ? ' is-late' : '')}>
+                        {arc.featuredPity.get(d.record.uid) ?? d.pity}
+                      </span>
                     )}
                   </li>
                 ))}

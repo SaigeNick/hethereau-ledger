@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useI18n } from '../lib/i18n'
 import { decodePackets, looksLikeSync, unpackSync } from '../lib/nteDecoder'
 import { useStore } from '../lib/store'
 import { POOL_IDS } from '../lib/types'
 
-type Line = { ok: boolean; text: string }
+import { ImportResults, type ResultLine as Line } from './ImportResults'
 
 /** One command, scroll the history in the game, paste here. */
 export function SyncImport() {
@@ -38,7 +37,7 @@ export function SyncImport() {
         const prevNewest = before.reduce((m, r) => (r.time > m ? r.time : m), '')
         const oldestNew = records.reduce((m, r) => (r.time < m ? r.time : m), records[0].time)
         const res = importParsed({ pool, records, warnings: [] })
-        out.push({ ok: true, text: t('import.result', { pool: t(`pool.${pool}` as never), added: res.added, dup: res.duplicates }) })
+        out.push({ ok: true, added: res.added, text: t('import.result', { pool: t(`pool.${pool}` as never), added: res.added, dup: res.duplicates }) })
         if (before.length && prevNewest && oldestNew > prevNewest) {
           out.push({ ok: false, text: t('sync.gap', { pool: t(`pool.${pool}` as never), date: fmtDate(prevNewest.replace(' ', 'T')) }) })
         }
@@ -124,20 +123,7 @@ export function SyncImport() {
           {t('sync.import')}
         </button>
       </div>
-      {lines.length > 0 && (
-        <ul className="results" aria-live="polite">
-          {lines.map((l, i) => (
-            <li key={i} className={l.ok ? 'ok' : 'bad'}>
-              {l.text}
-            </li>
-          ))}
-          {lines.some((l) => l.ok) && (
-            <li>
-              <Link to="/">{t('nav.overview')}</Link>
-            </li>
-          )}
-        </ul>
-      )}
+      <ImportResults lines={lines} />
       <p className="note muted">{t('sync.safety')}</p>
     </section>
   )

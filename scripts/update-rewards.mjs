@@ -85,13 +85,23 @@ for (const t of TABLES) {
     rewards[key] = [name, rank, t.type]
     const wantIcon = !t.onlyIfGacha || gachaIds.has(key) || key.startsWith('fashion_')
     const iconPath = wantIcon && t.icon && (row[t.icon]?.AssetPathName || row.ItemIcon?.AssetPathName || row.DisplayIcon?.AssetPathName || row.ItemIconBig?.AssetPathName)
+    const srcs = []
+    const glide = /^fashion_glide_(.+)$/i.exec(id) ?? (/^glide_all_default$/i.test(id) ? [id, 'Default'] : null)
+    if (glide) {
+      // Gliders: the appearance art beats the generic item icon. File names are
+      // case-sensitive on GitHub, so try the spellings the game uses.
+      const tail = glide[1]
+      srcs.push(
+        `UI/Appearance/Glider/Fashion_Glide_${tail}.png`,
+        `UI/Appearance/Glider/YH_UI_Glider_lihui_${tail}.png`,
+        `UI/Appearance/Glider/YH_UI_Glider_lihui_${tail}_01.png`,
+        `UI/Appearance/Glider/${id}.png`,
+      )
+    }
     if (iconPath && iconPath.startsWith('/Game/UI/UI_Icon/')) {
-      icons.push({ key, src: 'UI_Icon/' + iconPath.slice('/Game/UI/UI_Icon/'.length).split('.')[0] + '.png' })
+      srcs.push('UI_Icon/' + iconPath.slice('/Game/UI/UI_Icon/'.length).split('.')[0] + '.png')
     }
-    else if (/^fashion_glide_/i.test(id)) {
-      // Some gliders only have their picture in the appearance UI folder.
-      icons.push({ key, src: `UI/Appearance/Glider/${id}.png` })
-    }
+    if (srcs.length) icons.push({ key, srcs })
   }
 }
 
@@ -105,22 +115,51 @@ for (const [k, v] of Object.entries(rewards)) {
 let withIcon = new Set()
 if (withImages) {
   await mkdir('public/portraits', { recursive: true })
-  for (const { key, src } of icons) {
+  for (const { key, srcs } of icons) {
     const file = `public/portraits/${key}.webp`
     if (existsSync(file)) {
       withIcon.add(key)
       continue
     }
-    const res = await fetch(RAW + src)
-    if (!res.ok) continue
+    let res = null
+    for (const src of srcs) {
+      const r = await fetch(RAW + src)
+      if (r.ok) {
+        res = r
+        break
+      }
+    }
+    if (!res) continue
     // Small square webp keeps the site light.
     const img = await sharp(Buffer.from(await res.arrayBuffer())).resize(128, 128, { fit: 'cover', position: 'top' }).webp({ quality: 82 }).toBuffer()
     await writeFile(file, img)
     withIcon.add(key)
   }
-} else if (existsSync('src/data/rewards.json')) {
+}
+// Keep pictures fetched on earlier runs even if this run's table scan missed them.
+if (existsSync('src/data/rewards.json')) {
   const prev = JSON.parse(await readFile('src/data/rewards.json', 'utf8'))
-  withIcon = new Set(prev.icons ?? [])
+  for (const k of prev.icons ?? []) if (existsSync(`public/portraits/${k}.webp`) && rewards[k]) withIcon.add(k)
+}
+
+// What the gacha banners offer, from the in-game gacha showcase: the playable
+// characters and each limited banner's outfit, car skin and glider.
+{
+  const doc = await getJson('DataTable/Gacha/GachaIllustrate.json')
+  const keys = Object.keys(doc[0]?.Rows ?? {})
+  const characters = keys.filter((k) => /^\d{4}$/.test(k) && rewards[k]?.[2] === 'character')
+  const skins = []
+  for (const k of keys) {
+    const id = k.toLowerCase()
+    if (!rewards[id]) continue
+    const char = /^fashion_(?:character_|glide_|vehicle(?:skin)?_)?(\d{4})/.exec(id)?.[1]
+    if (!char) continue
+    const kind = id.startsWith('fashion_glide_') ? 'glider' : id.startsWith('fashion_vehicle') ? 'car' : 'outfit'
+    skins.push({ id, char, kind })
+  }
+  const text = JSON.stringify({ characters, skins }) + '\n'
+  await writeFile('src/data/collection.json', text)
+  console.log(`collection: ${characters.length} characters, ${skins.length} skins`)
 }
 
 const sortedKeys = Object.keys(rewards).sort()

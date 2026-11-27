@@ -10,6 +10,7 @@ import { lookup, resolveAll } from '../lib/dictionary'
 import { useI18n, type Lang } from '../lib/i18n'
 import { computeStats } from '../lib/stats'
 import { fmtEur, pullValue } from '../lib/spend'
+import { arcPity } from '../lib/arc'
 import { useStore } from '../lib/store'
 import type { PullRecord } from '../lib/types'
 
@@ -111,7 +112,8 @@ function useRuns(records: PullRecord[], arcRecords: PullRecord[]): RunView[] {
     const resolved = resolveAll(records)
     const pityByUid = new Map(computeStats('Lottery_LimitedCharacter', resolved).sDrops.map((d) => [d.record.uid, d.pity]))
     const arcs = resolveAll(arcRecords)
-    const arcPity = new Map(computeStats('Arc_MiracleBox', arcs).sDrops.map((d) => [d.record.uid, d.pity]))
+    const arcSPity = new Map(computeStats('Arc_MiracleBox', arcs).sDrops.map((d) => [d.record.uid, d.pity]))
+    const { featuredPity } = arcPity(arcs)
     const now = today()
     return RUNS.map((run) => {
       const mine = resolved.filter((r) => r.banner === run.banner && !isBonus(r) && (r.kind === 'dice' || r.kind === 'manual'))
@@ -129,7 +131,7 @@ function useRuns(records: PullRecord[], arcRecords: PullRecord[]): RunView[] {
         arcPulls: arcRun.length,
         arcS: arcRun
           .filter((r) => r.rank === 'S')
-          .map((r) => ({ name: r.name, pity: arcPity.get(r.uid) ?? 0, featured: !!arcBanner && ARC_FEATURED[arcBanner] === r.rewardId })),
+          .map((r) => ({ name: r.name, pity: featuredPity.get(r.uid) ?? arcSPity.get(r.uid) ?? 0, featured: !!arcBanner && ARC_FEATURED[arcBanner] === r.rewardId })),
       } satisfies RunView
     })
   }, [records, arcRecords])

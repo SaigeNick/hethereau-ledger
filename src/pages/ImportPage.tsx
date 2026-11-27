@@ -1,13 +1,11 @@
 import { useRef, useState, type DragEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { EXPORTER_RELEASES, NPCAP_URL } from '../config'
 import { useI18n } from '../lib/i18n'
 import { ImportError, parseExport } from '../lib/importer'
 import { newId, useStore } from '../lib/store'
 import { POOL_IDS, type PoolId, type PullRecord } from '../lib/types'
 import { SyncImport } from '../components/SyncImport'
 
-type Line = { ok: boolean; text: string }
+import { ImportResults, type ResultLine as Line } from '../components/ImportResults'
 
 export function ImportPage() {
   const { t } = useI18n()
@@ -22,7 +20,7 @@ export function ImportPage() {
       try {
         const parsed = parseExport(await file.text())
         const res = importParsed(parsed)
-        out.push({ ok: true, text: t('import.result', { pool: t(`pool.${res.pool}` as never), added: res.added, dup: res.duplicates }) })
+        out.push({ ok: true, added: res.added, text: t('import.result', { pool: t(`pool.${res.pool}` as never), added: res.added, dup: res.duplicates }) })
         if (res.createdProfile) out.push({ ok: true, text: t('import.newProfile') })
       } catch (e) {
         const code = e instanceof ImportError ? e.code : 'wrong_format'
@@ -44,26 +42,7 @@ export function ImportPage() {
       <SyncImport />
 
       <h2 className="spaced">{t('import.exporterTitle')}</h2>
-      <p>{t('import.lead')}</p>
-
-      <ol className="steps">
-        <li>
-          {t('import.step1')}{' '}
-          <a href={EXPORTER_RELEASES} target="_blank" rel="noreferrer">
-            {t('import.releases')}
-          </a>
-        </li>
-        <li>
-          {t('import.step2')}{' '}
-          <a href={NPCAP_URL} target="_blank" rel="noreferrer">
-            npcap.com
-          </a>
-        </li>
-        <li>{t('import.step3')}</li>
-        <li>{t('import.step4')}</li>
-        <li>{t('import.step5')}</li>
-      </ol>
-      <p className="note muted">{t('import.risk')}</p>
+      <p className="muted">{t('import.exporterLead')}</p>
 
       <button
         type="button"
@@ -91,21 +70,7 @@ export function ImportPage() {
       />
       <p className="note muted">{t('import.reimport')}</p>
 
-      {lines.length > 0 && (
-        <ul className="results" aria-live="polite">
-          {lines.map((l, i) => (
-            <li key={i} className={l.ok ? 'ok' : 'bad'}>
-              {l.text}
-            </li>
-          ))}
-          {lines.some((l) => l.ok) && (
-            <li>
-              <Link to="/">{t('nav.overview')}</Link>
-            </li>
-          )}
-        </ul>
-      )}
-
+      <ImportResults lines={lines} />
 
       <ManualForm />
     </div>
@@ -119,14 +84,17 @@ function ManualForm() {
   const [count, setCount] = useState(10)
   const [gotTop, setGotTop] = useState(false)
   const [name, setName] = useState('')
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+  const [clock, setClock] = useState(() => new Date().toTimeString().slice(0, 5))
   const [done, setDone] = useState<string | null>(null)
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     const n = Math.max(1, Math.min(500, Math.floor(count)))
-    const now = new Date()
-    const time = `${date} ${now.toTimeString().slice(0, 8)}`
+    const time = `${date} ${(clock || '12:00').slice(0, 5)}:00`
     const batch = newId(6)
     const topType = pool === 'Arc_MiracleBox' ? 'arc' : pool === 'Gashapon_MysteryBox' ? 'item' : 'character'
     const rows: PullRecord[] = []
@@ -170,10 +138,16 @@ function ManualForm() {
           <span>{t('manual.count')}</span>
           <input type="number" min={1} max={500} value={count} onChange={(e) => setCount(Number(e.target.value))} required />
         </label>
-        <label>
-          <span>{t('manual.date')}</span>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-        </label>
+        <div className="form-row">
+          <label>
+            <span>{t('manual.date')}</span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          </label>
+          <label>
+            <span>{t('manual.time')}</span>
+            <input type="time" value={clock} onChange={(e) => setClock(e.target.value)} required />
+          </label>
+        </div>
         <label className="check">
           <input type="checkbox" checked={gotTop} onChange={(e) => setGotTop(e.target.checked)} />
           <span>{t('manual.gotTop')}</span>

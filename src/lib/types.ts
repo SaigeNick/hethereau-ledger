@@ -49,6 +49,8 @@ export interface Profile {
   source?: string
   /** IDs of achievements the player marked as done. */
   achievements?: string[]
+  /** Hand corrections to the collection: extra character copies, skins marked owned (true) or not (false). */
+  collection?: { chars?: Record<string, number>; skins?: Record<string, boolean> }
 }
 
 export interface StoreState {

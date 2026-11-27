@@ -63,10 +63,14 @@ export function rollsForChance(pity: number, copies: number, target: number) {
   return lo
 }
 
+/** Warp Pieces buy one Solid Dice, Fabricated Dice or Tri-Key per 5. */
+export const WARP_PER_PULL = 5
+
 export interface PlanInput {
   pity: number
   annulith: number
   dice: number
+  warp?: number
   dailyAnnulith: number
   days: number
   copies: number
@@ -74,7 +78,7 @@ export interface PlanInput {
 
 export function plan(i: PlanInput) {
   const annulith = Math.max(0, i.annulith) + Math.max(0, i.dailyAnnulith) * Math.max(0, i.days)
-  const rolls = Math.max(0, Math.floor(i.dice)) + Math.floor(annulith / ANNULITH_PER_ROLL)
+  const rolls = Math.max(0, Math.floor(i.dice)) + Math.floor(annulith / ANNULITH_PER_ROLL) + Math.floor(Math.max(0, i.warp ?? 0) / WARP_PER_PULL)
   const chances = chanceOfCopies(rolls, i.pity, i.copies)
   const guarantee = rollsToGuarantee(i.pity, i.copies)
   const missing = Math.max(0, guarantee - rolls)
@@ -150,8 +154,8 @@ export function arcRollsToGuarantee(sinceF: number, copies: number) {
   return Math.ceil((first + ARC_FEAT_HARD * (copies - 1)) / 10) * 10
 }
 
-export function arcPlan(i: { sinceS: number; sinceF: number; pulls: number; copies: number }) {
-  const rolls = Math.floor(Math.max(0, i.pulls) / 10) * 10
+export function arcPlan(i: { sinceS: number; sinceF: number; pulls: number; copies: number; warp?: number }) {
+  const rolls = Math.floor((Math.max(0, i.pulls) + Math.floor(Math.max(0, i.warp ?? 0) / WARP_PER_PULL)) / 10) * 10
   const chances = arcChanceOfCopies(rolls, i.sinceS, i.sinceF, i.copies)
   const guarantee = arcRollsToGuarantee(i.sinceF, i.copies)
   let forHalf = guarantee

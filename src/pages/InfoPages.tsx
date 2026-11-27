@@ -1,7 +1,9 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { CONTACT_EMAIL, REPO_URL } from '../config'
+import { setStatsOptOut, statsOptedOut, withdraw } from '../lib/globalStats'
 import { useI18n, type Lang } from '../lib/i18n'
+import { useStore } from '../lib/store'
 
 /**
  * FAQ, privacy policy and terms. Plain text with [label](url) links;
@@ -71,7 +73,7 @@ function Updated({ lang }: { lang: Lang }) {
   return <p className="muted">{lang === 'uk' ? `Оновлено ${d}` : `Updated ${d}`}</p>
 }
 
-function DocPage({ doc }: { doc: Record<Lang, Doc> }) {
+function DocPage({ doc, extra }: { doc: Record<Lang, Doc>; extra?: ReactNode }) {
   const { lang } = useI18n()
   const c = doc[lang]
   return (
@@ -85,8 +87,46 @@ function DocPage({ doc }: { doc: Record<Lang, Doc> }) {
           <Blocks body={s.body} lang={lang} />
         </section>
       ))}
+      {extra}
       <LegalNav />
     </article>
+  )
+}
+
+/** The right to object to community stats, kept out of the way on purpose. */
+function StatsOptOut() {
+  const { lang } = useI18n()
+  const { state } = useStore()
+  const [off, setOff] = useState(statsOptedOut)
+  const uk = lang === 'uk'
+  return (
+    <section id="stats-optout" className="optout">
+      {off ? (
+        <p className="muted">
+          {uk ? 'Ви відмовилися: ваші числа не надсилаються. ' : 'You have opted out: your numbers are not sent. '}
+          <button
+            className="link-btn"
+            onClick={() => {
+              setStatsOptOut(false)
+              setOff(false)
+            }}
+          >
+            {uk ? 'Повернути участь' : 'Take part again'}
+          </button>
+        </p>
+      ) : (
+        <button
+          className="link-btn"
+          onClick={() => {
+            setStatsOptOut(true)
+            setOff(true)
+            void withdraw(state.profiles)
+          }}
+        >
+          {uk ? 'Відмовитися від загальної статистики' : 'Opt out of community stats'}
+        </button>
+      )}
+    </section>
   )
 }
 
@@ -186,7 +226,7 @@ const FAQ: Record<Lang, Faq> = {
             q: 'Як працює «Ти удачливіший за X% гравців»?',
             a: [
               'Сайт анонімно надсилає лише числа з лімітованих банерів: скільки кидків і на якому кидку випала кожна S. Без імені, UID чи IP. З них рахуються середні значення спільноти й ваше місце серед гравців.',
-              'Не хочете брати участь — вимкніть це на сторінці [Профіль](#/profile#stats), і ваші числа видаляться.',
+              'Не хочете брати участь — натисніть «Відмовитися» внизу [політики конфіденційності](#/privacy), і ваші числа видаляться.',
             ],
           },
           {
@@ -332,7 +372,7 @@ const FAQ: Record<Lang, Faq> = {
             q: 'How does “You’re luckier than X% of players” work?',
             a: [
               'The site anonymously sends only numbers from the limited banners: how many rolls and the roll each S came on. No name, UID or IP. Community averages and your place among players are calculated from them.',
-              'If you don’t want to take part, turn it off on the [Profile](#/profile#stats) page and your numbers are deleted.',
+              'If you don’t want to take part, press “Opt out” at the bottom of the [privacy policy](#/privacy) and your numbers are deleted.',
             ],
           },
           {
@@ -483,7 +523,7 @@ const PRIVACY: Record<Lang, Doc> = {
         body: [
           'Щоб показати, наскільки ви удачливі порівняно з іншими гравцями, сайт надсилає на сервер лише числа з лімітованих банерів: загальну кількість кидків і номер кидка, на якому випала кожна S. Разом з ними зберігається ідентифікатор — хеш внутрішнього номера вашої першої крутки, щоб повторне надсилання замінювало старі числа, а не дублювало їх. Імені, UID гри та IP-адреси там немає.',
           'Ці числа зберігаються в Cloudflare і видаляються через 180 днів без оновлень. Показуються лише в зведеному вигляді (кількість гравців, середні значення). Підстава: наш законний інтерес у тому, щоб показувати гравцям загальну статистику.',
-          'Ви можете заперечити будь-коли: вимкніть «Загальна статистика» на сторінці [Профіль](#/profile#stats). Тоді вже надіслані числа видаляться, а нові не надсилатимуться.',
+          'Ви можете заперечити будь-коли: натисніть «Відмовитися від загальної статистики» внизу цієї сторінки. Тоді вже надіслані числа видаляться, а нові не надсилатимуться.',
         ],
       },
       {
@@ -587,7 +627,7 @@ const PRIVACY: Record<Lang, Doc> = {
         body: [
           'To show how lucky you are compared with other players, the site sends only numbers from the limited banners to the server: your total rolls and the roll each S came on. They are stored with an identifier, a hash of your first pull’s internal number, so re-sending replaces your old numbers instead of duplicating them. No name, game UID or IP address is included.',
           'These numbers are kept in Cloudflare and deleted after 180 days without updates. They are only shown in aggregate (player count, averages). Legal basis: our legitimate interest in showing players community statistics.',
-          'You can object at any time: turn off “Community stats” on the [Profile](#/profile#stats) page. Numbers already sent are then deleted and no new ones are sent.',
+          'You can object at any time: press “Opt out of community stats” at the bottom of this page. Numbers already sent are then deleted and no new ones are sent.',
         ],
       },
       {
@@ -762,5 +802,5 @@ const TERMS: Record<Lang, Doc> = {
   },
 }
 
-export const PrivacyPage = () => <DocPage doc={PRIVACY} />
+export const PrivacyPage = () => <DocPage doc={PRIVACY} extra={<StatsOptOut />} />
 export const TermsPage = () => <DocPage doc={TERMS} />
