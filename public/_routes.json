@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/", "/index.html", "/api/*", "/s", "/cal/*", "/sync.ps1", "/hethereau-sync.cmd", "/sw.js", "/manifest.webmanifest"],
+  "exclude": []
+}

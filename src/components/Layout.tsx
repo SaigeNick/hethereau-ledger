@@ -182,6 +182,14 @@ export function Layout() {
                 </NavLink>
               </li>
             ))}
+            {KOFI_URL && (
+              <li>
+                <a href={KOFI_URL} target="_blank" rel="noreferrer" className="sheet-kofi">
+                  <Icon name="coffee" />
+                  <span>{t('footer.kofi')}</span>
+                </a>
+              </li>
+            )}
             <li>
               <InstallButton className="sheet-btn">
                 <Icon name="install" />
