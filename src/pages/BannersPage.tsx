@@ -13,6 +13,8 @@ import { fmtEur, pullValue } from '../lib/spend'
 import { arcPity } from '../lib/arc'
 import { useStore } from '../lib/store'
 import type { PullRecord } from '../lib/types'
+import { statusOf } from '../lib/bannerTimer'
+import { BannerTimer } from '../components/BannerTimer'
 import { daysUk, pluralUk, pullsUk, rollsUk } from '../lib/plural'
 
 const TEXT = {
@@ -117,7 +119,6 @@ function useRuns(records: PullRecord[], arcRecords: PullRecord[]): RunView[] {
     const arcs = resolveAll(arcRecords)
     const arcSPity = new Map(computeStats('Arc_MiracleBox', arcs).sDrops.map((d) => [d.record.uid, d.pity]))
     const { featuredPity } = arcPity(arcs)
-    const now = today()
     return RUNS.map((run) => {
       const mine = resolved.filter((r) => r.banner === run.banner && !isBonus(r) && (r.kind === 'dice' || r.kind === 'manual'))
       const within = (r: PullRecord) => r.time.slice(0, 10) >= run.start && r.time.slice(0, 10) < run.end
@@ -127,7 +128,7 @@ function useRuns(records: PullRecord[], arcRecords: PullRecord[]): RunView[] {
       const arcRun = arcBanner ? arcs.filter((r) => r.banner === arcBanner && within(r)) : []
       return {
         run,
-        status: now < run.start ? 'soon' : now < run.end ? 'now' : 'past',
+        status: statusOf(run),
         pulls: inRun.length,
         sPities: inRun.filter((r) => r.rank === 'S' && r.rewardType === 'character').map((r) => pityByUid.get(r.uid) ?? 0),
         milestonePulls: mine.filter((r) => r.time.slice(0, 10) < run.end).length,
@@ -179,6 +180,7 @@ export function BannersPage() {
     <article className="archive">
       <h1>{x.title}</h1>
       <p className="lead">{x.lead}</p>
+      <BannerTimer />
       <div className="seg archive-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'time'} className={tab === 'time' ? 'is-on' : ''} onClick={() => pick('time')}>
           {x.tabTime}

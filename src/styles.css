@@ -3008,3 +3008,117 @@ h2.spaced {
   padding: 0 10px;
   font-size: 0.82rem;
 }
+
+/* Banner timer: what is live now, how long it lasts, what comes next. */
+.timer-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 18px 28px;
+  margin: 0 0 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: radial-gradient(120% 140% at 100% 0%, rgba(79, 227, 210, 0.1), transparent 55%), var(--night-2);
+}
+.timer-block p {
+  margin: 0 0 10px;
+}
+.timer-block--next {
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+.timer-runs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin-bottom: 12px;
+}
+.timer-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.timer-who > div {
+  display: grid;
+}
+.timer-who .tag {
+  justify-self: start;
+  margin: 2px 0;
+}
+.timer-left {
+  font-size: 1.05rem;
+}
+.timer-left strong {
+  font: 700 1.6rem var(--display);
+  color: var(--teal);
+  margin-right: 4px;
+}
+.timer-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+.timer-foot p {
+  margin: 0;
+  flex: 1 1 280px;
+}
+.cal-menu {
+  position: relative;
+}
+.cal-menu summary {
+  list-style: none;
+  cursor: pointer;
+}
+.cal-menu summary::-webkit-details-marker {
+  display: none;
+}
+.cal-pop {
+  position: absolute;
+  z-index: 25;
+  left: 0;
+  top: calc(100% + 8px);
+  width: 280px;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--night-2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+.cal-pop a {
+  display: block;
+  padding: 10px 10px;
+  border-radius: var(--r-md);
+  color: var(--ink);
+  text-decoration: none;
+}
+.cal-pop a:hover {
+  background: var(--night-3);
+}
+.cal-pop p {
+  margin: 6px 10px 4px;
+}
+.empty .timer-card {
+  margin-top: 32px;
+}
+@media (max-width: 760px) {
+  .timer-card {
+    grid-template-columns: 1fr;
+  }
+  .timer-block--next {
+    padding: 16px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .timer-runs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .timer-who {
+    align-items: flex-start;
+  }
+}
