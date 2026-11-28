@@ -3138,12 +3138,6 @@ h2.spaced {
   text-align: left;
   cursor: pointer;
 }
-.footer-install {
-  color: inherit;
-  font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
 .install-icon {
   border-radius: 12px;
 }
@@ -3155,7 +3149,7 @@ h2.spaced {
 }
 .install-hint {
   position: fixed;
-  z-index: 19;
+  z-index: 40;
   left: 12px;
   right: 12px;
   bottom: calc(84px + env(safe-area-inset-bottom));
@@ -3163,14 +3157,15 @@ h2.spaced {
   grid-template-columns: auto 1fr;
   gap: 10px 12px;
   align-items: center;
-  max-width: 520px;
+  max-width: 480px;
   margin: 0 auto;
   padding: 14px 44px 14px 14px;
   border: 1px solid rgba(79, 227, 210, 0.45);
   border-radius: 16px;
   background: rgba(24, 29, 56, 0.97);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
-  animation: hint-in 0.35s ease-out both;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  animation: hint-in 0.35s ease-out;
 }
 @keyframes hint-in {
   from {
@@ -3206,4 +3201,18 @@ h2.spaced {
 }
 .install-hint-actions .link-btn {
   white-space: nowrap;
+}
+
+.install-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 32px 0;
+}
+.install-section img {
+  flex: none;
+  border-radius: 14px;
+}
+.install-section h2 {
+  margin-top: 0;
 }

@@ -117,3 +117,33 @@ export function InstallHint() {
     </aside>
   )
 }
+
+const SECTION = {
+  uk: {
+    title: 'Застосунок на телефон',
+    lead: 'Встановіть Hethereau як застосунок: іконка на головному екрані, відкривається без панелей браузера і працює без інтернету з уже збереженими крутками.',
+    done: 'Ви вже відкрили Hethereau як застосунок.',
+  },
+  en: {
+    title: 'App on your phone',
+    lead: 'Install Hethereau as an app: an icon on your home screen that opens without browser bars and works offline with the pulls you already saved.',
+    done: 'You’re already using Hethereau as an app.',
+  },
+}
+
+/** Profile block: install the app, or a note that it already is. */
+export function InstallSection() {
+  const { lang } = useI18n()
+  const x = SECTION[lang]
+  const app = useInstall()
+  return (
+    <section className="install-section">
+      <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" width={56} height={56} />
+      <div>
+        <h2>{x.title}</h2>
+        <p className="muted">{app.installed ? x.done : x.lead}</p>
+        <InstallButton className="btn" />
+      </div>
+    </section>
+  )
+}

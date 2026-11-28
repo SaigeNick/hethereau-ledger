@@ -202,7 +202,6 @@ export function Footer() {
       <div className="footer-text">
         <p>{t('footer.fan')}</p>
         <p className="footer-links">
-          <InstallButton className="link-btn footer-install">{t('nav.install')}</InstallButton>
           <NavLink to="/guide">{t('nav.guide')}</NavLink>
           <NavLink to="/faq">{t('footer.faq')}</NavLink>
           <NavLink to="/privacy">{t('footer.privacy')}</NavLink>

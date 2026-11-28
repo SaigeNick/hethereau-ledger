@@ -4,6 +4,7 @@ import { _setDriveStatus, useDriveSync } from '../lib/driveSync'
 import { useI18n } from '../lib/i18n'
 import { shareSig } from '../lib/autoShare'
 import { DangerZone } from '../components/DangerZone'
+import { InstallSection } from '../components/InstallApp'
 import { AccountCards, ProfileHeader } from '../components/ProfileHeader'
 import { QrCode } from '../components/QrCode'
 import { createShare, deleteShare, shareUrl, ShareUnavailable, updateShare } from '../lib/share'
@@ -143,6 +144,8 @@ export function ProfilePage() {
       </section>
 
       <DriveSection />
+
+      <InstallSection />
 
       <section>
         <h2>{t('profile.backup')}</h2>
