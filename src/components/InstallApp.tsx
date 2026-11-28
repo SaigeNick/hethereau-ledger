@@ -86,8 +86,13 @@ export function InstallHint() {
       return true
     }
   })
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setReady(true), 2500)
+    return () => clearTimeout(id)
+  }, [])
   const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 860px) and (pointer: coarse)').matches
-  if (hidden || app.installed || !phone || !(app.canPrompt || app.ios)) return null
+  if (!ready || hidden || app.installed || !phone || !(app.canPrompt || app.ios)) return null
   const dismiss = () => {
     setHidden(true)
     try {
@@ -97,7 +102,7 @@ export function InstallHint() {
     }
   }
   return (
-    <aside className="install-hint">
+    <aside className="install-hint" role="dialog" aria-label={x.install}>
       <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" width={40} height={40} />
       <p>{x.banner}</p>
       <div className="install-hint-actions">
