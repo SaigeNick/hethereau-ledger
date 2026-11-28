@@ -105,6 +105,16 @@ export function SyncImport() {
             </button>
           </div>
           {copyBlocked && <p className="bad small">{t('sync.copyBlocked')}</p>}
+          <div className="block-note">
+            <p className="small">{t('sync.blockNote')}</p>
+            <p className="small">
+              <a href="https://github.com/SaigeNick/hethereau-ledger/blob/main/public/sync.ps1" target="_blank" rel="noopener noreferrer">
+                {t('sync.viewCode')}
+              </a>
+              {' · '}
+              <a href="#/faq">{t('sync.whyLink')}</a>
+            </p>
+          </div>
           {newest.length > 0 && (
             <div className="since">
               <p className="muted small">{t('sync.since')}</p>

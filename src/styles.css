@@ -2569,3 +2569,31 @@ h2.spaced {
 .cmd code {
   overflow-wrap: anywhere;
 }
+
+/* Heads-up that blockers may stop copying the command. */
+.block-note {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--teal);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: rgba(68, 228, 207, 0.07);
+}
+.block-note p {
+  margin: 0;
+}
+.block-note p + p {
+  margin-top: 6px;
+}
+
+.ach-how {
+  font-size: 0.8rem;
+}
+.ach-how a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.ach-how a:hover {
+  color: var(--pink);
+}

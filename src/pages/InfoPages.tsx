@@ -259,10 +259,11 @@ const FAQ: Record<Lang, Faq> = {
             ],
           },
           {
-            q: 'Браузер не дає скопіювати команду. Чому?',
+            q: 'Браузер чи антивірус блокує команду або каже, що вона небезпечна. Це вірус?',
             a: [
-              'Шахраї часто просять людей «вставити команду в PowerShell», тож деякі браузери, розширення й антивіруси блокують копіювання таких команд. Наша команда безпечна, а її код відкритий, проте захист цього не знає.',
-              'Виділіть команду й скопіюйте вручну, наберіть її самі (вона коротка) або скачайте запускач hethereau-sync.cmd на сторінці [Імпорт](#/import). Windows може попередити про файл з інтернету: «Докладніше» → «Однаково запустити».',
+              'Ні, і таке попередження — нормальна річ. Шахраї часто просять людей «вставити команду в PowerShell», тому браузери, розширення (наприклад, Paste Protect в Opera) й антивіруси блокують копіювання будь-яких таких команд або попереджають про них. Вміст команди вони не перевіряють, тож блокують і безпечні.',
+              'Наша команда лише читає мережевий трафік гри на вашому ПК, поки ви гортаєте історію, і копіює сторінки історії в буфер обміну. Вона нічого не встановлює, не змінює гру й нікуди не надсилає ваші дані. Її код відкритий, його можна прочитати перед запуском: [sync.ps1 на GitHub](https://github.com/SaigeNick/hethereau-ledger/blob/main/public/sync.ps1).',
+              'Як обійти блокування: виділіть команду й скопіюйте вручну, наберіть коротку версію irm https://hethereau-ledger.pages.dev/s | iex або скачайте запускач hethereau-sync.cmd на сторінці [Імпорт](#/import). Windows може попередити про файл з інтернету: «Докладніше» → «Однаково запустити».',
             ],
           },
           {
@@ -405,10 +406,11 @@ const FAQ: Record<Lang, Faq> = {
             ],
           },
           {
-            q: 'My browser won’t let me copy the command. Why?',
+            q: 'My browser or antivirus blocks the command or calls it dangerous. Is it a virus?',
             a: [
-              'Scammers often ask people to “paste a command into PowerShell”, so some browsers, extensions and antivirus tools block copying such commands. Our command is safe and its code is open, but the protection can’t tell.',
-              'Select the command and copy it by hand, type it yourself (it’s short), or download the hethereau-sync.cmd launcher on the [Import](#/import) page. Windows may warn about a file from the internet: More info → Run anyway.',
+              'No, and the warning is normal. Scammers often ask people to “paste a command into PowerShell”, so browsers, extensions (such as Opera’s Paste Protect) and antivirus tools block copying any such command or warn about it. They don’t check what the command does, so safe ones get blocked too.',
+              'Our command only reads the game’s network traffic on your PC while you turn the history pages, and copies those pages to your clipboard. It installs nothing, doesn’t change the game and sends your data nowhere. Its code is open, so you can read it before running it: [sync.ps1 on GitHub](https://github.com/SaigeNick/hethereau-ledger/blob/main/public/sync.ps1).',
+              'To get around the block: select the command and copy it by hand, type the short version irm https://hethereau-ledger.pages.dev/s | iex, or download the hethereau-sync.cmd launcher on the [Import](#/import) page. Windows may warn about a file from the internet: More info → Run anyway.',
             ],
           },
           {

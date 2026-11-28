@@ -40,6 +40,11 @@ const CAT_UK: Record<string, string> = {
   Social: 'Зв’язки',
 }
 
+/** GameWith's page that walks through every hidden achievement. */
+const HIDDEN_GUIDE = 'https://gamewith.net/nte/74385'
+/** No site has a page per achievement, so search for guides on this one. */
+const searchGuide = (title: string) => `https://www.google.com/search?q=${encodeURIComponent(`Neverness to Everness achievement "${title}"`)}`
+
 const TEXT = {
   uk: {
     title: 'Досягнення',
@@ -55,6 +60,8 @@ const TEXT = {
     allCats: 'Усі розділи',
     spoilers: 'Показувати приховані',
     hidden: 'Приховане досягнення',
+    howTo: 'Як отримати?',
+    hiddenGuide: 'Як отримати: гайд по прихованих (GameWith, англ.)',
     hiddenHint: 'Умову видно після отримання або коли ввімкнено «Показувати приховані»',
     reward: (a: number) => `+${a} Annulith`,
     markAll: 'Відмітити всі в розділі',
@@ -76,6 +83,8 @@ const TEXT = {
     allCats: 'All sections',
     spoilers: 'Show hidden ones',
     hidden: 'Hidden achievement',
+    howTo: 'How to get it?',
+    hiddenGuide: 'How to get it: hidden achievements guide (GameWith)',
     hiddenHint: 'The condition shows once you have it, or when Show hidden ones is on',
     reward: (a: number) => `+${a} Annulith`,
     markAll: 'Tick all in section',
@@ -232,6 +241,17 @@ export function AchievementsPage() {
                           {a.h ? <span className="tag">{x.hidden}</span> : null}
                         </span>
                         <span className="ach-desc muted">{secret ? x.hiddenHint : a.d}</span>
+                        <span className="ach-how">
+                          {a.h ? (
+                            <a href={HIDDEN_GUIDE} target="_blank" rel="noopener noreferrer">
+                              {x.hiddenGuide}
+                            </a>
+                          ) : (
+                            <a href={searchGuide(a.t)} target="_blank" rel="noopener noreferrer">
+                              {x.howTo}
+                            </a>
+                          )}
+                        </span>
                       </span>
                       {a.a > 0 && <span className="ach-reward">{x.reward(a.a)}</span>}
                     </label>
