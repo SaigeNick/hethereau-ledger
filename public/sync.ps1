@@ -14,7 +14,7 @@
 # memory. Uses only what ships with Windows: PowerShell + .NET raw sockets.
 
 $ErrorActionPreference = 'Stop'
-$HlVersion = '1.2.0'
+$HlVersion = '1.2.1'
 $targets = @()
 if (Get-Variable HlSince -ErrorAction SilentlyContinue) { $targets = @($HlSince | Where-Object { $_ }) }
 Remove-Variable HlSince -ErrorAction SilentlyContinue
@@ -34,7 +34,7 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     return
 }
 
-if (-not ('HlSync3' -as [type])) {
+if (-not ('HlSync4' -as [type])) {
 Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Concurrent;
@@ -46,7 +46,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
 
-public class HlSync3 {
+public class HlSync4 {
     public static ConcurrentQueue<byte[]> Found = new ConcurrentQueue<byte[]>();
     public static long Seen = 0;
     public static long Pages = 0;
@@ -59,7 +59,7 @@ public class HlSync3 {
     private Thread thread;
     private volatile bool running;
 
-    public HlSync3(string ip) {
+    public HlSync4(string ip) {
         sock = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.IP);
         sock.Bind(new IPEndPoint(IPAddress.Parse(ip), 0));
         sock.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.HeaderIncluded, true);
@@ -212,30 +212,95 @@ public class HlSync3 {
         lock (tcp) { foreach (int p in list) { gameTcp.Add(p); } }
     }
 
-    // Drops buffered connections that are not the game's and have gone quiet.
+    private static byte[] foundAch = null;
+    private static int dropped = 0;
+
+    // Drops buffered connections that are not the game's and have gone quiet,
+    // after a quick look for the achievements block in case the port lookup missed it.
     public static void PruneTcp() {
         long cutoff = DateTime.UtcNow.Ticks - TimeSpan.FromSeconds(5).Ticks;
+        List<TcpStream> check = new List<TcpStream>();
         lock (tcp) {
             List<string> gone = new List<string>();
             foreach (KeyValuePair<string, TcpStream> kv in tcp) {
-                if (!gameTcp.Contains(kv.Value.Port) && kv.Value.Last < cutoff) { gone.Add(kv.Key); }
+                if (!gameTcp.Contains(kv.Value.Port) && kv.Value.Last < cutoff) { gone.Add(kv.Key); check.Add(kv.Value); }
             }
-            foreach (string k in gone) { Interlocked.Add(ref tcpBytes, -tcp[k].Bytes); tcp.Remove(k); }
+            foreach (string k in gone) { Interlocked.Add(ref tcpBytes, -tcp[k].Bytes); tcp.Remove(k); dropped++; }
+        }
+        if (foundAch != null) { return; }
+        foreach (TcpStream st in check) {
+            if (st.Bytes < 1024) { continue; }
+            byte[] stream = Reassemble(st.Segs);
+            byte[] f = stream == null ? null : ScanFrames(stream, 0, false);
+            if (f != null) { foundAch = f; return; }
         }
     }
 
-    // The decoded block from "AchievementRecord" on, or null.
+    // The decoded block from "AchievementRecord" on, or null. Game connections
+    // first (with resync), then every other buffered connection (strict only).
     public static byte[] FindAchievements() {
-        List<TcpStream> mine = new List<TcpStream>();
-        lock (tcp) { foreach (TcpStream st in tcp.Values) { if (gameTcp.Contains(st.Port)) { mine.Add(st); } } }
-        foreach (TcpStream st in mine) {
+        if (foundAch != null) { return foundAch; }
+        List<TcpStream> game = new List<TcpStream>();
+        List<TcpStream> rest = new List<TcpStream>();
+        lock (tcp) { foreach (TcpStream st in tcp.Values) { (gameTcp.Contains(st.Port) ? game : rest).Add(st); } }
+        foreach (TcpStream st in game) {
             byte[] stream = Reassemble(st.Segs);
             if (stream == null) { continue; }
             byte[] found = ScanFrames(stream, 0, false);
             if (found == null) { found = ScanFrames(stream, 0, true); }
             if (found != null) { return found; }
         }
+        foreach (TcpStream st in rest) {
+            byte[] stream = Reassemble(st.Segs);
+            byte[] found = stream == null ? null : ScanFrames(stream, 0, false);
+            if (found != null) { return found; }
+        }
         return null;
+    }
+
+    // A short report for when nothing was found, so the cause can be pinned down.
+    public static string Diagnose() {
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        List<KeyValuePair<string, TcpStream>> all = new List<KeyValuePair<string, TcpStream>>();
+        lock (tcp) {
+            foreach (KeyValuePair<string, TcpStream> kv in tcp) { all.Add(kv); }
+            sb.AppendFormat("  game TCP ports seen: {0}; buffered connections: {1}; dropped: {2}\n", gameTcp.Count, all.Count, dropped);
+        }
+        all.Sort((a, b) => b.Value.Bytes.CompareTo(a.Value.Bytes));
+        int shown = 0;
+        foreach (KeyValuePair<string, TcpStream> kv in all) {
+            if (shown++ >= 6) { break; }
+            TcpStream st = kv.Value;
+            byte[] stream = Reassemble(st.Segs);
+            int frames = 0, lz4 = 0;
+            bool marker = false;
+            if (stream != null) { CountFrames(stream, out frames, out lz4, out marker); }
+            sb.AppendFormat("  {0} {1}: {2} KB in {3} segments, contiguous {4} KB, frames {5}, unpacked {6}, marker {7}\n",
+                gameTcp.Contains(st.Port) ? "GAME" : "other", kv.Key, st.Bytes / 1024, st.Segs.Count,
+                stream == null ? 0 : stream.Length / 1024, frames, lz4, marker ? "yes" : "no");
+        }
+        return sb.ToString();
+    }
+
+    private static void CountFrames(byte[] s, out int frames, out int lz4, out bool marker) {
+        frames = 0; lz4 = 0; marker = false;
+        int pos = 0, n = s.Length;
+        while (pos + 8 <= n) {
+            int size = BitConverter.ToInt32(s, pos);
+            int f = pos + 4;
+            if (size < 20 || (long)f + size > n) { return; }
+            frames++;
+            int hs = BitConverter.ToInt32(s, f);
+            long so = (long)f + 12 + hs;
+            if (hs >= 0 && so + 4 <= (long)f + size) {
+                int ds = BitConverter.ToInt32(s, (int)so);
+                if (ds > 0 && so + 4 + ds <= (long)f + size) {
+                    byte[] dec = Lz4(s, (int)so + 4, ds);
+                    if (dec != null) { lz4++; if (IndexOf(dec, achMarker) >= 0) { marker = true; } }
+                }
+            }
+            pos = f + size;
+        }
     }
 
     private static byte[] Reassemble(List<KeyValuePair<uint, byte[]>> segs) {
@@ -356,27 +421,35 @@ while (-not $game) {
 }
 Write-Ok ("Found the game (PID {0})." -f $game.Id)
 
-[HlSync3]::SetTargets($targets.Count)
-for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync3]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
+[HlSync4]::SetTargets($targets.Count)
+for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync4]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
 
 $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.AddressState -eq 'Preferred' } |
     Select-Object -ExpandProperty IPAddress)
 $listeners = @()
 foreach ($a in $addresses) {
-    try { $l = New-Object HlSync3($a); $l.Start(); $listeners += $l } catch { }
+    try { $l = New-Object HlSync4($a); $l.Start(); $listeners += $l } catch { }
 }
 if (-not $listeners) {
     Write-Warn 'Could not listen to the network. If Windows Firewall asked about PowerShell, allow it and run again.'
     return
 }
 
+function Game-Ids {
+    @(Get-Process | Where-Object { $_.ProcessName -match 'HTGame' -or $_.MainWindowTitle -match 'Neverness' } | Select-Object -ExpandProperty Id)
+}
+$script:gameIds = Game-Ids
+
 function Update-Ports {
-    $list = @(Get-NetUDPEndpoint -OwningProcess $game.Id -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync3]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
-    $tcpPorts = @(Get-NetTCPConnection -OwningProcess $game.Id -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync3]::AddGameTcpPorts([int[]]@($tcpPorts | Where-Object { $_ } | ForEach-Object { [int]$_ }))
-    [HlSync3]::PruneTcp()
+    # The game can restart its process when you log out, so look it up again each time.
+    $ids = Game-Ids
+    if ($ids.Count) { $script:gameIds = $ids }
+    $list = @(Get-NetUDPEndpoint -OwningProcess $script:gameIds -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
+    [HlSync4]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    $tcpPorts = @(Get-NetTCPConnection -OwningProcess $script:gameIds -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
+    [HlSync4]::AddGameTcpPorts([int[]]@($tcpPorts | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    [HlSync4]::PruneTcp()
 }
 Update-Ports
 
@@ -410,19 +483,20 @@ $last = [DateTime]::UtcNow
 try {
     while ($true) {
         $p = $null
-        while ([HlSync3]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+        while ([HlSync4]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
         if (([DateTime]::UtcNow - $last).TotalSeconds -ge 1) {
             Update-Ports
             $last = [DateTime]::UtcNow
             for ($i = 0; $i -lt $targets.Count; $i++) {
-                if ([HlSync3]::Reached[$i] -and -not $announced[$i]) {
+                if ([HlSync4]::Reached[$i] -and -not $announced[$i]) {
                     $announced[$i] = $true
                     Write-Host ''
                     Write-Ok ("  OK  {0}: reached saved pulls, no need to turn more pages." -f $targets[$i].Name)
                 }
             }
-            Write-Host ("`r  history pages captured: {0}   " -f [HlSync3]::Pages) -NoNewline
-            if ($game.HasExited) { Write-Host ''; Write-Warn 'The game closed.'; break }
+            Write-Host ("`r  history pages captured: {0}   " -f [HlSync4]::Pages) -NoNewline
+            if (-not (Game-Ids).Count -and -not $closedNoted) { $closedNoted = $true; Write-Host ''; Write-Warn 'The game is closed. Start it again, or press Enter to finish.' }
+            if ((Game-Ids).Count) { $closedNoted = $false }
         }
         if ([Console]::KeyAvailable) {
             $key = [Console]::ReadKey($true)
@@ -434,11 +508,11 @@ try {
     foreach ($l in $listeners) { $l.Stop() }
 }
 $p = $null
-while ([HlSync3]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+while ([HlSync4]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
 
 # Achievements, if the login happened while this was running.
 $ach = $null
-try { Update-Ports; $ach = [HlSync3]::FindAchievements() } catch { }
+try { Update-Ports; $ach = [HlSync4]::FindAchievements() } catch { }
 if ($ach) {
     $tag = [System.Text.Encoding]::ASCII.GetBytes("HLACH1`0")
     $frame = New-Object byte[] ($tag.Length + $ach.Length)
@@ -448,6 +522,13 @@ if ($ach) {
     Write-Ok 'Achievements found.'
 } else {
     Write-Host 'Achievements were not captured (log in again while this runs to include them).' -ForegroundColor DarkGray
+    Write-Host 'Details for the site (send a screenshot of these lines if achievements never come through):' -ForegroundColor DarkGray
+    try {
+        $conns = @(Get-NetTCPConnection -OwningProcess $script:gameIds -ErrorAction SilentlyContinue)
+        $v6 = @($conns | Where-Object { $_.LocalAddress -match ':' }).Count
+        Write-Host ("  game processes: {0}; game TCP connections now: {1} (IPv6: {2})" -f ($script:gameIds -join ','), $conns.Count, $v6) -ForegroundColor DarkGray
+        Write-Host ([HlSync4]::Diagnose()) -ForegroundColor DarkGray -NoNewline
+    } catch { Write-Host ('  ' + $_.Exception.Message) -ForegroundColor DarkGray }
 }
 
 if ($packets.Count -eq 0) {
@@ -455,7 +536,7 @@ if ($packets.Count -eq 0) {
     return
 }
 
-$text = [HlSync3]::Pack($packets)
+$text = [HlSync4]::Pack($packets)
 Set-Clipboard -Value $text
 Write-Ok ("Done: {0} pages copied to your clipboard." -f $packets.Count)
 Write-Host 'Go to the Import page on the site and press Ctrl+V.'
