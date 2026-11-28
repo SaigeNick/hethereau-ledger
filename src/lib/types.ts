@@ -41,7 +41,10 @@ export interface Profile {
   name: string
   /** Game account UID from the exporter. Never sent when sharing. */
   gameUid?: string
+  /** Server region code: EU, AM, AS or SEA (see regions.ts). */
   region?: string
+  /** Character ID shown as the profile picture. */
+  avatar?: string
   records: PoolRecords
   updatedAt: string
   share?: { id: string; token: string; updatedAt: string; sig?: string }

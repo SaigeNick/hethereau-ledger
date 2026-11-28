@@ -4,6 +4,7 @@ import { _setDriveStatus, useDriveSync } from '../lib/driveSync'
 import { useI18n } from '../lib/i18n'
 import { shareSig } from '../lib/autoShare'
 import { DangerZone } from '../components/DangerZone'
+import { AccountCards, ProfileHeader } from '../components/ProfileHeader'
 import { QrCode } from '../components/QrCode'
 import { createShare, deleteShare, shareUrl, ShareUnavailable, updateShare } from '../lib/share'
 import { isStoreState, useStore } from '../lib/store'
@@ -85,22 +86,9 @@ export function ProfilePage() {
 
   return (
     <div className="profile">
-      <h1>{t('profile.title')}</h1>
-
-      <section className="form">
-        <label>
-          <span>{t('profile.name')}</span>
-          <input value={active.name} placeholder={t('profile.namePh')} maxLength={40} onChange={(e) => store.updateProfile(active.id, { name: e.target.value })} />
-        </label>
-        {active.gameUid && active.gameUid !== 'demo' && (
-          <p className="muted">
-            {t('profile.uid')}: <span className="mono">{active.gameUid}</span>
-            {active.region ? ` · ${t('profile.region')}: ${active.region}` : ''}
-            <br />
-            {t('profile.uidHidden')}
-          </p>
-        )}
-      </section>
+      <h1 className="sr-only">{t('profile.title')}</h1>
+      <ProfileHeader />
+      <AccountCards />
 
       <section>
         <h2>{t('profile.share')}</h2>
@@ -155,28 +143,6 @@ export function ProfilePage() {
       </section>
 
       <DriveSection />
-
-      <section>
-        <h2>{t('profile.list')}</h2>
-        <ul className="profiles">
-          {state.profiles.map((p) => (
-            <li key={p.id}>
-              <span>{p.name || t('profile.unnamed')}</span>
-              {p.gameUid && <span className="muted mono">{p.gameUid}</span>}
-              {p.id === active.id ? (
-                <span className="muted">{t('profile.current')}</span>
-              ) : (
-                <button className="link-btn" onClick={() => store.switchProfile(p.id)}>
-                  {t('profile.switch')}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-        <button className="btn btn--ghost" onClick={() => store.addProfile('')}>
-          {t('profile.add')}
-        </button>
-      </section>
 
       <section>
         <h2>{t('profile.backup')}</h2>

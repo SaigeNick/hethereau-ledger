@@ -11,11 +11,24 @@ const TTL = 180 * 86_400
 const AGG_MAX_AGE = 900_000
 const MAX_S = 200
 
+const REGIONS = ['EU', 'AM', 'AS', 'SEA']
+
 interface Meta {
   p: number
   s: number[]
+  /** Server region, when the player set it. */
+  r?: string
+}
+interface Totals {
+  players: number
+  pulls: number
+  sCount: number
+  hist: number[]
+  avgs: number[]
 }
 export interface Aggregate {
+  /** Same numbers per server region; players without a region only count in the totals. */
+  regions: Record<string, Totals>
   players: number
   pulls: number
   sCount: number
@@ -67,7 +80,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
   const sum = pities.reduce((a: number, b: number) => a + b, 0)
   if (sum > pulls) return json({ error: 'bad_input' }, 400)
-  const meta: Meta = { p: pulls, s: pities }
+  const region = body?.region == null ? undefined : String(body.region)
+  if (region !== undefined && !REGIONS.includes(region)) return json({ error: 'bad_input' }, 400)
+  const meta: Meta = region ? { p: pulls, s: pities, r: region } : { p: pulls, s: pities }
   await env.SHARES.put(`${prefix(request)}st:${key}`, '1', { metadata: meta, expirationTtl: TTL })
   return new Response(null, { status: 204 })
 }
@@ -83,26 +98,32 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env }) => {
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const pre = prefix(request)
-  const cached = await env.SHARES.get<Aggregate>(`${pre}stats:agg`, 'json')
+  const cached = await env.SHARES.get<Aggregate>(`${pre}stats:agg2`, 'json')
   if (cached && Date.now() - cached.updatedAt < AGG_MAX_AGE) return send(cached)
 
-  const agg: Aggregate = { players: 0, pulls: 0, sCount: 0, hist: Array(90).fill(0), avgs: [], updatedAt: Date.now() }
+  const empty = (): Totals => ({ players: 0, pulls: 0, sCount: 0, hist: Array(90).fill(0), avgs: [] })
+  const agg: Aggregate = { ...empty(), regions: Object.fromEntries(REGIONS.map((r) => [r, empty()])), updatedAt: Date.now() }
+  const add = (t: Totals, m: Meta) => {
+    t.players++
+    t.pulls += m.p
+    t.sCount += m.s.length
+    for (const p of m.s) t.hist[p - 1]++
+    if (m.s.length) t.avgs.push(Math.round((m.s.reduce((a, b) => a + b, 0) / m.s.length) * 10) / 10)
+  }
   let cursor: string | undefined
   do {
     const page = await env.SHARES.list<Meta>({ prefix: `${pre}st:`, cursor })
     for (const k of page.keys) {
       const m = k.metadata
       if (!m || !Array.isArray(m.s)) continue
-      agg.players++
-      agg.pulls += m.p
-      agg.sCount += m.s.length
-      for (const p of m.s) agg.hist[p - 1]++
-      if (m.s.length) agg.avgs.push(Math.round((m.s.reduce((a, b) => a + b, 0) / m.s.length) * 10) / 10)
+      add(agg, m)
+      if (m.r && agg.regions[m.r]) add(agg.regions[m.r], m)
     }
     cursor = page.list_complete ? undefined : (page as { cursor: string }).cursor
   } while (cursor)
   agg.avgs.sort((a, b) => a - b)
-  await env.SHARES.put(`${pre}stats:agg`, JSON.stringify(agg))
+  for (const t of Object.values(agg.regions)) t.avgs.sort((a, b) => a - b)
+  await env.SHARES.put(`${pre}stats:agg2`, JSON.stringify(agg))
   return send(agg)
 }
 

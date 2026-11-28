@@ -1,22 +1,27 @@
 import { resolveAll } from './dictionary'
 import { computeStats } from './stats'
+import { normalizeRegion } from './regions'
 import type { Profile } from './types'
 
 /**
  * Anonymous community stats. Only numbers leave the browser: total pulls on the
- * limited board and the pity of each S. The key is a hash of the first pull's
+ * limited board, the pity of each S and, if set, the server region. The key is a hash of the first pull's
  * internal ID, so re-sending replaces the old entry instead of adding a new one.
  */
 const OPT_OUT = 'hethereau-ledger.statsOptOut'
 const SENT = 'hethereau-ledger.statsSent'
 const MIN_PULLS = 10
 
-export interface Aggregate {
+export interface Totals {
   players: number
   pulls: number
   sCount: number
   hist: number[]
   avgs: number[]
+}
+export interface Aggregate extends Totals {
+  /** Per server region (EU, AM, AS, SEA); missing on old cached aggregates. */
+  regions?: Record<string, Totals>
   updatedAt: number
 }
 
@@ -78,7 +83,7 @@ export function summarize(profile: Profile) {
   const s = computeStats('Lottery_LimitedCharacter', resolveAll(recs))
   if (s.totalPulls < MIN_PULLS) return null
   const first = [...recs].sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0))[0]
-  return { seed: first.uid, pulls: s.totalPulls, pities: s.sDrops.map((d) => d.pity).slice(-200) }
+  return { seed: first.uid, pulls: s.totalPulls, pities: s.sDrops.map((d) => d.pity).slice(-200), region: normalizeRegion(profile.region) }
 }
 
 /** Sends this profile's numbers if they changed since the last send. Never throws. */
@@ -88,13 +93,13 @@ export async function contribute(profile: Profile) {
     const sum = summarize(profile)
     if (!sum) return
     const key = await keyOf(sum.seed)
-    const sig = `${key}:${sum.pulls}:${sum.pities.join(',')}`
+    const sig = `${key}:${sum.pulls}:${sum.pities.join(',')}:${sum.region ?? ''}`
     const sent: Record<string, string> = JSON.parse(localStorage.getItem(SENT) ?? '{}')
     if (sent[key] === sig) return
     const res = await fetch('/api/stats', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ key, pulls: sum.pulls, pities: sum.pities }),
+      body: JSON.stringify({ key, pulls: sum.pulls, pities: sum.pities, region: sum.region }),
     })
     if (res.ok) {
       sent[key] = sig

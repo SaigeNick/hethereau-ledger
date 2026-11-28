@@ -14,6 +14,9 @@ const uk = {
   'nav.collection': 'Колекція',
   'lang.switch': 'English',
   'nav.more': 'Ще',
+  'nav.accounts': 'Акаунти',
+  'nav.profileSettings': 'Профіль і налаштування',
+  'nav.addAccount': 'Додати акаунт',
   'common.close': 'Закрити',
 
   'pool.Lottery_LimitedCharacter': 'Лімітована дошка',
@@ -251,6 +254,9 @@ const en: Record<Key, string> = {
   'nav.faq': 'FAQ',
   'lang.switch': 'Українська',
   'nav.more': 'More',
+  'nav.accounts': 'Accounts',
+  'nav.profileSettings': 'Profile and settings',
+  'nav.addAccount': 'Add account',
   'common.close': 'Close',
 
   'pool.Lottery_LimitedCharacter': 'Limited Board',

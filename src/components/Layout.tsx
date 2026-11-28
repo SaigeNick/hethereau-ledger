@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Icon, type IconName } from './Icon'
+import { ProfileAvatar } from './ProfileHeader'
 import { KOFI_URL, REPO_URL } from '../config'
 import { useI18n, type TKey } from '../lib/i18n'
 import { useAutoShare } from '../lib/autoShare'
@@ -29,14 +30,54 @@ const MORE: Item[] = [
 
 export function Layout() {
   const { t, lang, setLang } = useI18n()
-  const { saveFailed, active } = useStore()
+  const store = useStore()
+  const { saveFailed, active, state } = store
+  const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menu = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
   const sheet = useRef<HTMLDialogElement>(null)
   useAutoShare()
   useDriveAutoSync()
 
-  useEffect(() => setMoreOpen(false), [pathname])
+  useEffect(() => {
+    setMoreOpen(false)
+    setMenuOpen(false)
+  }, [pathname])
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !menu.current?.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [menuOpen])
+  const addAccount = () => {
+    store.addProfile('')
+    navigate('/import')
+  }
+  const accountList = (onPick: () => void) =>
+    state.profiles.map((p) => (
+      <button
+        key={p.id}
+        type="button"
+        role="menuitemradio"
+        aria-checked={p.id === active.id}
+        className={'account-item' + (p.id === active.id ? ' is-on' : '')}
+        onClick={() => {
+          store.switchProfile(p.id)
+          onPick()
+        }}
+      >
+        <ProfileAvatar profile={p} size={28} />
+        <span>{p.name || t('profile.unnamed')}</span>
+      </button>
+    ))
   useEffect(() => {
     const d = sheet.current
     if (!d) return
@@ -73,10 +114,29 @@ export function Layout() {
             <Icon name="import" size={18} />
             <span>{t('nav.import')}</span>
           </NavLink>
-          <NavLink to="/profile" className="top-profile" title={t('nav.profile')}>
-            <Icon name="profile" size={18} />
-            <span>{active.name || t('nav.profile')}</span>
-          </NavLink>
+          <div className="account-menu" ref={menu}>
+            <button type="button" className={'top-profile' + (pathname.startsWith('/profile') ? ' active' : '')} aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+              <ProfileAvatar profile={active} size={26} />
+              <span>{active.name || t('nav.profile')}</span>
+            </button>
+            {menuOpen && (
+              <div className="account-pop" role="menu">
+                <p className="muted small">{t('nav.accounts')}</p>
+                {accountList(() => setMenuOpen(false))}
+                <hr />
+                <NavLink to="/profile" role="menuitem" className="account-item">
+                  <Icon name="profile" size={20} />
+                  <span>{t('nav.profileSettings')}</span>
+                </NavLink>
+                <button type="button" role="menuitem" className="account-item" onClick={addAccount}>
+                  <span className="account-plus account-plus--sm" aria-hidden="true">
+                    +
+                  </span>
+                  <span>{t('nav.addAccount')}</span>
+                </button>
+              </div>
+            )}
+          </div>
           {langBtn}
         </div>
       </header>
@@ -106,6 +166,12 @@ export function Layout() {
               <Icon name="close" size={20} />
             </button>
           </div>
+          {state.profiles.length > 1 && (
+            <div className="sheet-accounts" role="menu" aria-label={t('nav.accounts')}>
+              <p className="muted small">{t('nav.accounts')}</p>
+              {accountList(() => setMoreOpen(false))}
+            </div>
+          )}
           <ul className="sheet-list">
             {MORE.map((i) => (
               <li key={i.to}>

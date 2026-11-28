@@ -225,7 +225,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Як працює «Ти удачливіший за X% гравців»?',
             a: [
-              'Сайт анонімно надсилає лише числа з лімітованих банерів: скільки кидків і на якому кидку випала кожна S. Без імені, UID чи IP. З них рахуються середні значення спільноти й ваше місце серед гравців.',
+              'Сайт анонімно надсилає лише числа з лімітованих банерів: скільки кидків і на якому кидку випав кожен S-персонаж, а також регіон сервера, якщо ви його вибрали в профілі. Без імені, UID чи IP. З них рахуються середні значення спільноти й ваше місце серед гравців — загалом і у вашому регіоні.',
               'Не хочете брати участь — натисніть «Відмовитися» внизу [політики конфіденційності](#/privacy), і ваші числа видаляться.',
             ],
           },
@@ -372,7 +372,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'How does “You’re luckier than X% of players” work?',
             a: [
-              'The site anonymously sends only numbers from the limited banners: how many rolls and the roll each S came on. No name, UID or IP. Community averages and your place among players are calculated from them.',
+              'The site anonymously sends only numbers from the limited banners: how many rolls and the roll each S-Class character came on, plus your server region if you set it in the profile. No name, UID or IP. Community averages and your place among players, overall and in your region, are calculated from them.',
               'If you don’t want to take part, press “Opt out” at the bottom of the [privacy policy](#/privacy) and your numbers are deleted.',
             ],
           },
@@ -523,7 +523,7 @@ const PRIVACY: Record<Lang, Doc> = {
         id: 'stats',
         title: 'Загальна статистика',
         body: [
-          'Щоб показати, наскільки ви удачливі порівняно з іншими гравцями, сайт надсилає на сервер лише числа з лімітованих банерів: загальну кількість кидків і номер кидка, на якому випала кожна S. Разом з ними зберігається ідентифікатор — хеш внутрішнього номера вашої першої крутки, щоб повторне надсилання замінювало старі числа, а не дублювало їх. Імені, UID гри та IP-адреси там немає.',
+          'Щоб показати, наскільки ви удачливі порівняно з іншими гравцями, сайт надсилає на сервер лише числа з лімітованих банерів: загальну кількість кидків, номер кидка, на якому випав кожен S-персонаж, і регіон сервера (Європа, Америка, Азія чи Пд.-Сх. Азія), якщо ви його вибрали. Разом з ними зберігається ідентифікатор — хеш внутрішнього номера вашої першої крутки, щоб повторне надсилання замінювало старі числа, а не дублювало їх. Імені, UID гри та IP-адреси там немає.',
           'Ці числа зберігаються в Cloudflare і видаляються через 180 днів без оновлень. Показуються лише в зведеному вигляді (кількість гравців, середні значення). Підстава: наш законний інтерес у тому, щоб показувати гравцям загальну статистику.',
           'Ви можете заперечити будь-коли: натисніть «Відмовитися від загальної статистики» внизу цієї сторінки. Тоді вже надіслані числа видаляться, а нові не надсилатимуться.',
         ],
@@ -627,7 +627,7 @@ const PRIVACY: Record<Lang, Doc> = {
         id: 'stats',
         title: 'Community stats',
         body: [
-          'To show how lucky you are compared with other players, the site sends only numbers from the limited banners to the server: your total rolls and the roll each S came on. They are stored with an identifier, a hash of your first pull’s internal number, so re-sending replaces your old numbers instead of duplicating them. No name, game UID or IP address is included.',
+          'To show how lucky you are compared with other players, the site sends only numbers from the limited banners to the server: your total rolls, the roll each S-Class character came on and your server region (Europe, America, Asia or Southeast Asia) if you set it. They are stored with an identifier, a hash of your first pull’s internal number, so re-sending replaces your old numbers instead of duplicating them. No name, game UID or IP address is included.',
           'These numbers are kept in Cloudflare and deleted after 180 days without updates. They are only shown in aggregate (player count, averages). Legal basis: our legitimate interest in showing players community statistics.',
           'You can object at any time: press “Opt out of community stats” at the bottom of this page. Numbers already sent are then deleted and no new ones are sent.',
         ],

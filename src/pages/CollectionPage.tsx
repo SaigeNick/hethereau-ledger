@@ -3,6 +3,7 @@ import { Portrait } from '../components/Portrait'
 import collection from '../data/collection.json'
 import { FEATURED } from '../lib/bannerInfo'
 import { lookup, resolveAll } from '../lib/dictionary'
+import { characterCopies } from '../lib/profileInfo'
 import { useI18n } from '../lib/i18n'
 import { bannerStats } from '../lib/stats'
 import { useStore } from '../lib/store'
@@ -96,18 +97,7 @@ export function CollectionPage() {
 
   const all = useMemo(() => POOL_IDS.flatMap((p) => resolveAll(active.records[p])), [active.records])
 
-  const chars = useMemo(() => {
-    const seen = new Map<string, number>()
-    for (const r of all) if (r.rewardType === 'character') seen.set(r.rewardId, (seen.get(r.rewardId) ?? 0) + 1)
-    return collection.characters
-      .map((id) => {
-        const fromHistory = seen.get(id) ?? 0
-        const manual = active.collection?.chars?.[id] ?? 0
-        const r = lookup(id)
-        return { id, name: r?.name ?? id, rank: (r?.rank ?? 'S') as 'S' | 'A', fromHistory, manual, total: Math.max(0, fromHistory + manual) }
-      })
-      .sort((a, b) => (a.rank !== b.rank ? (a.rank === 'S' ? -1 : 1) : b.total - a.total || a.name.localeCompare(b.name)))
-  }, [all, active.collection])
+  const chars = useMemo(() => characterCopies(active), [active])
 
   const skins = useMemo(() => {
     const got = new Set(all.map((r) => r.rewardId.toLowerCase()))
