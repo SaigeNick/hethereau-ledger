@@ -495,7 +495,7 @@ function Find-Game {
 $game = Find-Game
 while (-not $game) {
     Write-Warn 'Neverness to Everness is not running.'
-    Write-Host 'Start the game and log in, then press Enter here.'
+    Write-Host 'Start the game (the login screen is enough), then press Enter here.'
     [void](Read-Host)
     $game = Find-Game
 }

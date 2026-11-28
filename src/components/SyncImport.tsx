@@ -148,9 +148,10 @@ export function SyncImport() {
           </p>
         </li>
         <li>
-          {t('sync.step3')}
-          <p className="muted small ach-hint">{t('sync.achHint')}</p>
+          {t('sync.stepAch')}{' '}
+          <a href="#/faq">{t('sync.fwLink')}</a>
         </li>
+        <li>{t('sync.step3')}</li>
         <li>{t('sync.step4')}</li>
       </ol>
       <label className="paste">

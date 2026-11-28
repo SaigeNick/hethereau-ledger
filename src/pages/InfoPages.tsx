@@ -250,11 +250,12 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Що саме робить команда?',
             a: [
-              'Поки ви гортаєте історію круток у грі, вона читає вхідні мережеві пакети гри на вашому ПК і копіює в буфер обміну лише ті, в яких є історія круток. Потім ви вставляєте текст на сайт, і він розбирається прямо у браузері.',
+              'Поки ви гортаєте історію круток у грі, вона читає вхідні мережеві пакети гри на вашому ПК і копіює в буфер обміну лише ті, в яких є історія круток (а якщо попросите — ще й досягнення з даних входу в акаунт). Потім ви вставляєте текст на сайт, і він розбирається прямо у браузері.',
               [
                 'не змінює файли гри й не втручається в її процес чи пам’ять;',
                 'нічого не надсилає ні на сервери гри, ні нам — лише відкриває сторінку імпорту;',
                 'не автоматизує жодних дій у грі;',
+                'змінює налаштування Windows лише з вашої згоди: для досягнень додає тимчасове правило брандмауера і видаляє його в кінці;',
                 'код відкритий — його можна прочитати перед запуском: [sync.ps1](/sync.ps1).',
               ],
             ],
@@ -411,11 +412,12 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'What exactly does the command do?',
             a: [
-              'While you scroll through your pull history in the game, it reads the game’s incoming network packets on your PC and copies only the ones that contain pull history to your clipboard. You then paste the text into the site, which decodes it right in your browser.',
+              'While you scroll through your pull history in the game, it reads the game’s incoming network packets on your PC and copies only the ones that contain pull history (and, if you ask for them, your achievements from the login data) to your clipboard. You then paste the text into the site, which decodes it right in your browser.',
               [
                 'it does not change game files or touch the game process or its memory;',
                 'it sends nothing to the game servers or to us; it only opens the import page;',
                 'it does not automate anything in the game;',
+                'it changes Windows settings only with your consent: for achievements it adds a temporary firewall rule and removes it at the end;',
                 'the code is open, so you can read it before running it: [sync.ps1](/sync.ps1).',
               ],
             ],
