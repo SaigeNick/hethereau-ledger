@@ -266,6 +266,13 @@ const FAQ: Record<Lang, Faq> = {
             ],
           },
           {
+            q: 'Навіщо команда питає про правило брандмауера?',
+            a: [
+              'Тільки для досягнень. Гра надсилає їх по TCP, а Windows показує такі вхідні дані команді лише тоді, коли це дозволяє брандмауер Windows Defender. Якщо відповісти Y, команда додає правило «Hethereau Ledger sync (temporary)», яке стосується лише цього вікна PowerShell, і видаляє його, щойно закінчить. Відповідь N нічого не змінює, крутки імпортуються як завжди.',
+              'Якщо закрити вікно хрестиком посеред роботи, правило прибереться при наступному запуску команди. Видалити його й самому можна в «Брандмауер Windows Defender → Додаткові параметри → Правила для вхідних підключень».',
+            ],
+          },
+          {
             q: 'Браузер чи антивірус блокує команду або каже, що вона небезпечна. Це вірус?',
             a: [
               'Ні, і таке попередження — нормальна річ. Шахраї часто просять людей «вставити команду в PowerShell», тому браузери, розширення (наприклад, Paste Protect в Opera) й антивіруси блокують копіювання будь-яких таких команд або попереджають про них. Вміст команди вони не перевіряють, тож блокують і безпечні.',
@@ -417,6 +424,13 @@ const FAQ: Record<Lang, Faq> = {
             q: 'Why does it need administrator rights?',
             a: [
               'Windows only lets programs with administrator rights read network packets. The command installs nothing and changes no system settings; it simply exits when done.',
+            ],
+          },
+          {
+            q: 'Why does the command ask about a firewall rule?',
+            a: [
+              'Only for achievements. The game sends them over TCP, and Windows shows such incoming data to the command only when Windows Defender Firewall allows it. If you answer Y, the command adds the rule “Hethereau Ledger sync (temporary)”, which covers only this PowerShell window, and removes it as soon as it finishes. Answering N changes nothing; pulls import as usual.',
+              'If you close the window midway, the rule is removed the next time you run the command. You can also delete it yourself in Windows Defender Firewall → Advanced settings → Inbound Rules.',
             ],
           },
           {

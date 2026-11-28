@@ -14,7 +14,7 @@
 # memory. Uses only what ships with Windows: PowerShell + .NET raw sockets.
 
 $ErrorActionPreference = 'Stop'
-$HlVersion = '1.2.1'
+$HlVersion = '1.3.0'
 $targets = @()
 if (Get-Variable HlSince -ErrorAction SilentlyContinue) { $targets = @($HlSince | Where-Object { $_ }) }
 Remove-Variable HlSince -ErrorAction SilentlyContinue
@@ -34,7 +34,7 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     return
 }
 
-if (-not ('HlSync4' -as [type])) {
+if (-not ('HlSync5' -as [type])) {
 Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Concurrent;
@@ -46,7 +46,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
 
-public class HlSync4 {
+public class HlSync5 {
     public static ConcurrentQueue<byte[]> Found = new ConcurrentQueue<byte[]>();
     public static long Seen = 0;
     public static long Pages = 0;
@@ -59,7 +59,7 @@ public class HlSync4 {
     private Thread thread;
     private volatile bool running;
 
-    public HlSync4(string ip) {
+    public HlSync5(string ip) {
         sock = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.IP);
         sock.Bind(new IPEndPoint(IPAddress.Parse(ip), 0));
         sock.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.HeaderIncluded, true);
@@ -182,7 +182,11 @@ public class HlSync4 {
     private const long TcpCap = 192L * 1024 * 1024;
     private static readonly byte[] achMarker = System.Text.Encoding.ASCII.GetBytes("AchievementRecord\0");
 
+    // Off unless the player asked for achievements.
+    public static bool TcpOn = false;
+
     private static void KeepTcp(byte[] buf, int n) {
+        if (!TcpOn) { return; }
         int ihl = (buf[0] & 0x0F) * 4;
         int total = (buf[2] << 8) | buf[3];
         if (total == 0 || total > n) { total = n; }
@@ -421,15 +425,40 @@ while (-not $game) {
 }
 Write-Ok ("Found the game (PID {0})." -f $game.Id)
 
-[HlSync4]::SetTargets($targets.Count)
-for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync4]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
+# Achievements come over TCP, and Windows only hands incoming TCP to this
+# window when Windows Defender Firewall allows it. Ask first; the rule is
+# temporary, covers only this PowerShell, and is removed when we finish.
+$ruleName = 'Hethereau Ledger sync (temporary)'
+Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+$wantAch = $false
+Write-Host ''
+Write-Host 'Also collect your achievements? [Y/N]' -ForegroundColor Cyan
+Write-Host '  This adds a temporary Windows Firewall rule that lets this PowerShell window'
+Write-Host '  see the data the game receives. It is removed when the command finishes.'
+$answer = Read-Host '  Y or N'
+if ($answer -match '^\s*[yY\u0442\u0422]') {
+    try {
+        $exe = (Get-Process -Id $PID).Path
+        New-NetFirewallRule -DisplayName $ruleName -Description 'Lets the Hethereau Ledger sync command read incoming game data. Removed when the command finishes.' -Direction Inbound -Action Allow -Program $exe -Protocol TCP -Profile Any -ErrorAction Stop | Out-Null
+        $wantAch = $true
+        [HlSync5]::TcpOn = $true
+        Write-Ok '  Temporary rule added.'
+        $blocked = @(Get-NetFirewallApplicationFilter -Program $exe -ErrorAction SilentlyContinue | Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object { $_.Direction -eq 'Inbound' -and $_.Action -eq 'Block' -and $_.Enabled -eq 'True' })
+        if ($blocked.Count) { Write-Warn ('  Another firewall rule blocks PowerShell ({0}); achievements may still not come through.' -f ($blocked[0].DisplayName)) }
+    } catch {
+        Write-Warn ('  Could not add the rule: ' + $_.Exception.Message)
+    }
+}
+
+[HlSync5]::SetTargets($targets.Count)
+for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync5]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
 
 $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.AddressState -eq 'Preferred' } |
     Select-Object -ExpandProperty IPAddress)
 $listeners = @()
 foreach ($a in $addresses) {
-    try { $l = New-Object HlSync4($a); $l.Start(); $listeners += $l } catch { }
+    try { $l = New-Object HlSync5($a); $l.Start(); $listeners += $l } catch { }
 }
 if (-not $listeners) {
     Write-Warn 'Could not listen to the network. If Windows Firewall asked about PowerShell, allow it and run again.'
@@ -446,10 +475,10 @@ function Update-Ports {
     $ids = Game-Ids
     if ($ids.Count) { $script:gameIds = $ids }
     $list = @(Get-NetUDPEndpoint -OwningProcess $script:gameIds -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync4]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    [HlSync5]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
     $tcpPorts = @(Get-NetTCPConnection -OwningProcess $script:gameIds -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync4]::AddGameTcpPorts([int[]]@($tcpPorts | Where-Object { $_ } | ForEach-Object { [int]$_ }))
-    [HlSync4]::PruneTcp()
+    [HlSync5]::AddGameTcpPorts([int[]]@($tcpPorts | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    [HlSync5]::PruneTcp()
 }
 Update-Ports
 
@@ -463,17 +492,21 @@ if ($targets.Count) {
     Write-Host '  and turn the pages until this window says "reached saved pulls".'
     Write-Host '  A banner that is not listed above: scroll its history to the end once.'
     Write-Host '  Then come back here and press Enter.'
-    Write-Host ''
-    Write-Host 'Achievements too: the game sends them once, when you log in. Run this' -ForegroundColor DarkCyan
-    Write-Host 'command on the title screen before logging in, or log out and back in now.' -ForegroundColor DarkCyan
+    if ($wantAch) {
+        Write-Host ''
+        Write-Host 'Achievements: the game sends them once, when you log in. If you are' -ForegroundColor DarkCyan
+        Write-Host 'already in the game, log out to the login screen and log in again now.' -ForegroundColor DarkCyan
+    }
 } else {
     Write-Host 'Now, in the game:' -ForegroundColor Cyan
     Write-Host '  open the pull history of a banner and scroll all the way to the end.'
     Write-Host '  You can do several banners in one go.'
     Write-Host '  Then come back here and press Enter.'
-    Write-Host ''
-    Write-Host 'Achievements too: the game sends them once, when you log in. Run this' -ForegroundColor DarkCyan
-    Write-Host 'command on the title screen before logging in, or log out and back in now.' -ForegroundColor DarkCyan
+    if ($wantAch) {
+        Write-Host ''
+        Write-Host 'Achievements: the game sends them once, when you log in. If you are' -ForegroundColor DarkCyan
+        Write-Host 'already in the game, log out to the login screen and log in again now.' -ForegroundColor DarkCyan
+    }
 }
 Write-Host ''
 
@@ -483,18 +516,18 @@ $last = [DateTime]::UtcNow
 try {
     while ($true) {
         $p = $null
-        while ([HlSync4]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+        while ([HlSync5]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
         if (([DateTime]::UtcNow - $last).TotalSeconds -ge 1) {
             Update-Ports
             $last = [DateTime]::UtcNow
             for ($i = 0; $i -lt $targets.Count; $i++) {
-                if ([HlSync4]::Reached[$i] -and -not $announced[$i]) {
+                if ([HlSync5]::Reached[$i] -and -not $announced[$i]) {
                     $announced[$i] = $true
                     Write-Host ''
                     Write-Ok ("  OK  {0}: reached saved pulls, no need to turn more pages." -f $targets[$i].Name)
                 }
             }
-            Write-Host ("`r  history pages captured: {0}   " -f [HlSync4]::Pages) -NoNewline
+            Write-Host ("`r  history pages captured: {0}   " -f [HlSync5]::Pages) -NoNewline
             if (-not (Game-Ids).Count -and -not $closedNoted) { $closedNoted = $true; Write-Host ''; Write-Warn 'The game is closed. Start it again, or press Enter to finish.' }
             if ((Game-Ids).Count) { $closedNoted = $false }
         }
@@ -506,14 +539,17 @@ try {
     }
 } finally {
     foreach ($l in $listeners) { $l.Stop() }
+    if ($wantAch) { Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue }
 }
 $p = $null
-while ([HlSync4]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+while ([HlSync5]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
 
 # Achievements, if the login happened while this was running.
 $ach = $null
-try { Update-Ports; $ach = [HlSync4]::FindAchievements() } catch { }
-if ($ach) {
+if ($wantAch) { try { Update-Ports; $ach = [HlSync5]::FindAchievements() } catch { } }
+if (-not $wantAch) {
+    # Achievements were not requested this time.
+} elseif ($ach) {
     $tag = [System.Text.Encoding]::ASCII.GetBytes("HLACH1`0")
     $frame = New-Object byte[] ($tag.Length + $ach.Length)
     [Array]::Copy($tag, $frame, $tag.Length)
@@ -527,7 +563,7 @@ if ($ach) {
         $conns = @(Get-NetTCPConnection -OwningProcess $script:gameIds -ErrorAction SilentlyContinue)
         $v6 = @($conns | Where-Object { $_.LocalAddress -match ':' }).Count
         Write-Host ("  game processes: {0}; game TCP connections now: {1} (IPv6: {2})" -f ($script:gameIds -join ','), $conns.Count, $v6) -ForegroundColor DarkGray
-        Write-Host ([HlSync4]::Diagnose()) -ForegroundColor DarkGray -NoNewline
+        Write-Host ([HlSync5]::Diagnose()) -ForegroundColor DarkGray -NoNewline
     } catch { Write-Host ('  ' + $_.Exception.Message) -ForegroundColor DarkGray }
 }
 
@@ -536,7 +572,7 @@ if ($packets.Count -eq 0) {
     return
 }
 
-$text = [HlSync4]::Pack($packets)
+$text = [HlSync5]::Pack($packets)
 Set-Clipboard -Value $text
 Write-Ok ("Done: {0} pages copied to your clipboard." -f $packets.Count)
 Write-Host 'Go to the Import page on the site and press Ctrl+V.'
