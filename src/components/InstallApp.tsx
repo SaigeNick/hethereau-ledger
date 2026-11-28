@@ -74,6 +74,9 @@ export function InstallButton({ className = 'btn btn--ghost', children }: { clas
 
 const DISMISSED = 'hethereau-ledger.installHint'
 
+/** Phones and small tablets: touch screen, narrow viewport. */
+const isPhone = () => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 860px) and (pointer: coarse)').matches
+
 /** A one-time hint on phones that the site can live on the home screen. */
 export function InstallHint() {
   const { lang } = useI18n()
@@ -91,7 +94,7 @@ export function InstallHint() {
     const id = setTimeout(() => setReady(true), 2500)
     return () => clearTimeout(id)
   }, [])
-  const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 860px) and (pointer: coarse)').matches
+  const phone = isPhone()
   if (!ready || hidden || app.installed || !phone || !(app.canPrompt || app.ios)) return null
   const dismiss = () => {
     setHidden(true)
@@ -136,6 +139,8 @@ export function InstallSection() {
   const { lang } = useI18n()
   const x = SECTION[lang]
   const app = useInstall()
+  // The app is offered on phones only.
+  if (!isPhone()) return null
   return (
     <section className="install-section">
       <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" width={56} height={56} />
