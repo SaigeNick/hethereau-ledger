@@ -268,7 +268,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Чи треба щоразу гортати всю історію?',
             a: [
-              'Ні. Уперше — до кінця. Потім достатньо відкрити сторінки з новими крутками і ще одну, яку сайт уже бачив. Якщо між імпортами лишиться прогалина, сайт попередить і скаже, до якої дати догорнути.',
+              'Ні. Уперше — до кінця. Далі команда сама знає, які крутки вже є на сайті: гортайте історію банера, доки у вікні команди не з’явиться «reached saved pulls», і зупиняйтесь. Зазвичай це 1–2 сторінки. Якщо між імпортами все ж лишиться прогалина, сайт попередить і скаже, до якої дати догорнути.',
             ],
           },
           {
@@ -281,7 +281,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Чому імпортувалися не всі крутки?',
             a: [
-              'Команда бачить лише ті сторінки історії, які ви відкрили в грі, поки вона працювала, тож гортайте до самого кінця. Історія Arc і Mystery Box поки не підтримується — ми над цим працюємо. Відсутнє можна додати вручну.',
+              'Команда бачить лише ті сторінки історії, які ви відкрили в грі, поки вона працювала. Уперше гортайте до самого кінця, а далі — до повідомлення «reached saved pulls». Крім того, гра показує історію лише за останні ~6 місяців: старіші крутки можна додати з JSON-файлів експортера або вручну.',
             ],
           },
         ],
@@ -414,7 +414,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Do I have to scroll the whole history every time?',
             a: [
-              'No. The first time, scroll to the end. After that, open the pages with new pulls plus one the site has already seen. If a gap is left between imports, the site warns you and says how far back to go.',
+              'No. The first time, scroll to the end. After that the command knows which pulls the site already has: turn a banner’s history pages until the command window says “reached saved pulls”, then stop. Usually that is 1–2 pages. If a gap is still left between imports, the site warns you and says how far back to go.',
             ],
           },
           {
@@ -427,7 +427,7 @@ const FAQ: Record<Lang, Faq> = {
           {
             q: 'Why weren’t all my pulls imported?',
             a: [
-              'The command only sees history pages you open in the game while it is running, so scroll all the way to the end. Arc and Mystery Box history isn’t supported yet; we’re working on it. You can add anything missing by hand.',
+              'The command only sees history pages you open in the game while it is running. The first time, scroll to the end; after that, until it says “reached saved pulls”. Also, the game only shows about the last 6 months of history: add older pulls from exporter JSON files or by hand.',
             ],
           },
         ],

@@ -11,10 +11,6 @@
   Content-Type: text/plain; charset=utf-8
   Cache-Control: no-cache
 
-/s
-  Content-Type: text/plain; charset=utf-8
-  Cache-Control: no-cache
-
 /hethereau-sync.cmd
   Content-Type: application/octet-stream
   Content-Disposition: attachment; filename="hethereau-sync.cmd"

@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../lib/i18n'
 import { decodePackets, looksLikeSync, unpackSync } from '../lib/nteDecoder'
 import { useStore } from '../lib/store'
+import { encodeTargets, newestTargets } from '../lib/syncHint'
 import { POOL_IDS } from '../lib/types'
 
 import { ImportResults, type ResultLine as Line } from './ImportResults'
 
 /** One command, scroll the history in the game, paste here. */
 export function SyncImport() {
-  const { t, fmtDate } = useI18n()
+  const { t, fmtDate, lang } = useI18n()
+  const fmtDateTime = (time: string) =>
+    new Date(time.replace(' ', 'T') + 'Z').toLocaleString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
   const { importParsed, active } = useStore()
   const [text, setText] = useState('')
   const [lines, setLines] = useState<Line[]>([])
@@ -16,8 +19,18 @@ export function SyncImport() {
   const [copied, setCopied] = useState(false)
   const [copyBlocked, setCopyBlocked] = useState(false)
   const host = location.host
-  // Short on purpose: easy to type when a browser refuses to copy it.
-  const command = `irm https://${host}/s | iex`
+  const short = `irm https://${host}/s | iex`
+  // The newest saved pull of each banner rides along, so the script can say where to stop.
+  const targets = useMemo(() => newestTargets(active.records), [active.records])
+  const command = targets.length ? `irm https://${host}/s?k=${encodeTargets(targets)} | iex` : short
+  const newest = useMemo(
+    () =>
+      POOL_IDS.flatMap((pool) => {
+        const last = active.records[pool].filter((r) => !r.manual).reduce<string>((m, r) => (r.time > m ? r.time : m), '')
+        return last ? [{ pool, last }] : []
+      }),
+    [active.records],
+  )
 
   async function run(value: string) {
     if (!looksLikeSync(value)) {
@@ -92,6 +105,20 @@ export function SyncImport() {
             </button>
           </div>
           {copyBlocked && <p className="bad small">{t('sync.copyBlocked')}</p>}
+          {newest.length > 0 && (
+            <div className="since">
+              <p className="muted small">{t('sync.since')}</p>
+              <div className="since-list">
+                {newest.map(({ pool, last }) => (
+                  <div key={pool} className="since-row">
+                    <span>{t(`pool.${pool}` as never)}</span>
+                    <span className="muted">{fmtDateTime(last)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="muted small">{t('sync.sinceShort', { cmd: short })}</p>
+            </div>
+          )}
           <p className="muted small">
             {t('sync.altLead')}{' '}
             <a href={`${import.meta.env.BASE_URL}hethereau-sync.cmd`} download>

@@ -227,8 +227,6 @@ export function assemble(pages: DecodedPage[]): RawRow[][] {
   return out
 }
 
-/** .NET ticks (UTC) to the viewer's local "YYYY-MM-DD HH:mm:ss". */
-
 function poolOf(row: RawRow): PoolId {
   if (row.kind === 'fork') return 'Arc_MiracleBox'
   if (row.kind === 'gashapon') return 'Gashapon_MysteryBox'

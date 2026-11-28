@@ -3,7 +3,9 @@
 # Run in PowerShell as administrator:
 #   irm https://<site>/sync.ps1 | iex
 #
-# While this runs, open your pull history in the game and scroll to the end.
+# While this runs, open your pull history in the game and turn the pages.
+# When the site passes the time of your newest saved pull ($HlSince), the
+# script says when you have reached it, so only new pages need opening.
 # It keeps only the game's history packets, packs them, and copies the result
 # to your clipboard; paste it on the site. Decoding happens on the site, so
 # this script does not need updates when new characters or banners arrive.
@@ -12,7 +14,10 @@
 # memory. Uses only what ships with Windows: PowerShell + .NET raw sockets.
 
 $ErrorActionPreference = 'Stop'
-$HlVersion = '1.0.0'
+$HlVersion = '1.1.0'
+$targets = @()
+if (Get-Variable HlSince -ErrorAction SilentlyContinue) { $targets = @($HlSince | Where-Object { $_ }) }
+Remove-Variable HlSince -ErrorAction SilentlyContinue
 $HlSite = 'https://hethereau-ledger.pages.dev/'
 
 function Write-Ok($text) { Write-Host $text -ForegroundColor Green }
@@ -29,7 +34,7 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     return
 }
 
-if (-not ('HlSync' -as [type])) {
+if (-not ('HlSync2' -as [type])) {
 Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Concurrent;
@@ -41,7 +46,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
 
-public class HlSync {
+public class HlSync2 {
     public static ConcurrentQueue<byte[]> Found = new ConcurrentQueue<byte[]>();
     public static long Seen = 0;
     public static long Pages = 0;
@@ -54,12 +59,39 @@ public class HlSync {
     private Thread thread;
     private volatile bool running;
 
-    public HlSync(string ip) {
+    public HlSync2(string ip) {
         sock = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.IP);
         sock.Bind(new IPEndPoint(IPAddress.Parse(ip), 0));
         sock.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.HeaderIncluded, true);
         sock.ReceiveBufferSize = 16 * 1024 * 1024;
         sock.IOControl(IOControlCode.ReceiveAll, BitConverter.GetBytes(1), new byte[4]);
+    }
+
+    // Stop markers: 40-bit windows of the newest saved pull's timestamp, at all
+    // eight bit offsets (see syncHint.ts on the site). Value = banner index.
+    private static Dictionary<long, int> marks = new Dictionary<long, int>();
+    public static int[] Reached = new int[0];
+
+    public static void SetTargets(int count) {
+        marks.Clear();
+        Reached = new int[count];
+    }
+
+    public static void AddTarget(int index, long lo, long hi) {
+        long mask = (1L << 40) - 1;
+        for (int k = 0; k < 8; k++) {
+            int shift = 24 - k;
+            for (long w = lo >> shift; w <= (hi >> shift); w++) { marks[w & mask] = index; }
+        }
+    }
+
+    private static void CheckMarks(byte[] d) {
+        if (marks.Count == 0) { return; }
+        for (int i = 0; i + 5 <= d.Length; i++) {
+            long w = (long)d[i] | ((long)d[i + 1] << 8) | ((long)d[i + 2] << 16) | ((long)d[i + 3] << 24) | ((long)d[i + 4] << 32);
+            int index;
+            if (marks.TryGetValue(w, out index)) { Reached[index] = 1; }
+        }
     }
 
     public static void SetPorts(int[] list) {
@@ -124,6 +156,7 @@ public class HlSync {
                 hashes.Add(h);
             }
             Interlocked.Increment(ref Pages);
+            CheckMarks(data);
             Found.Enqueue(data);
         }
     }
@@ -159,12 +192,15 @@ while (-not $game) {
 }
 Write-Ok ("Found the game (PID {0})." -f $game.Id)
 
+[HlSync2]::SetTargets($targets.Count)
+for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync2]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
+
 $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.AddressState -eq 'Preferred' } |
     Select-Object -ExpandProperty IPAddress)
 $listeners = @()
 foreach ($a in $addresses) {
-    try { $l = New-Object HlSync($a); $l.Start(); $listeners += $l } catch { }
+    try { $l = New-Object HlSync2($a); $l.Start(); $listeners += $l } catch { }
 }
 if (-not $listeners) {
     Write-Warn 'Could not listen to the network. If Windows Firewall asked about PowerShell, allow it and run again.'
@@ -173,27 +209,46 @@ if (-not $listeners) {
 
 function Update-Ports {
     $list = @(Get-NetUDPEndpoint -OwningProcess $game.Id -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    [HlSync2]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
 }
 Update-Ports
 
 Write-Host ''
-Write-Host 'Now, in the game:' -ForegroundColor Cyan
-Write-Host '  open the pull history of a banner and scroll all the way to the end.'
-Write-Host '  You can do several banners in one go.'
-Write-Host '  Then come back here and press Enter.'
+if ($targets.Count) {
+    Write-Host 'Newest pulls already on the site:' -ForegroundColor Cyan
+    foreach ($t in $targets) { Write-Host ("  {0}: {1}" -f $t.Name, $t.When) }
+    Write-Host ''
+    Write-Host 'Now, in the game:' -ForegroundColor Cyan
+    Write-Host '  open the pull history of each banner you pulled on since then'
+    Write-Host '  and turn the pages until this window says "reached saved pulls".'
+    Write-Host '  A banner that is not listed above: scroll its history to the end once.'
+    Write-Host '  Then come back here and press Enter.'
+} else {
+    Write-Host 'Now, in the game:' -ForegroundColor Cyan
+    Write-Host '  open the pull history of a banner and scroll all the way to the end.'
+    Write-Host '  You can do several banners in one go.'
+    Write-Host '  Then come back here and press Enter.'
+}
 Write-Host ''
 
 $packets = New-Object 'System.Collections.Generic.List[byte[]]'
+$announced = @{}
 $last = [DateTime]::UtcNow
 try {
     while ($true) {
         $p = $null
-        while ([HlSync]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+        while ([HlSync2]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
         if (([DateTime]::UtcNow - $last).TotalSeconds -ge 1) {
             Update-Ports
             $last = [DateTime]::UtcNow
-            Write-Host ("`r  history pages captured: {0}   " -f [HlSync]::Pages) -NoNewline
+            for ($i = 0; $i -lt $targets.Count; $i++) {
+                if ([HlSync2]::Reached[$i] -and -not $announced[$i]) {
+                    $announced[$i] = $true
+                    Write-Host ''
+                    Write-Ok ("  OK  {0}: reached saved pulls, no need to turn more pages." -f $targets[$i].Name)
+                }
+            }
+            Write-Host ("`r  history pages captured: {0}   " -f [HlSync2]::Pages) -NoNewline
             if ($game.HasExited) { Write-Host ''; Write-Warn 'The game closed.'; break }
         }
         if ([Console]::KeyAvailable) {
@@ -206,14 +261,14 @@ try {
     foreach ($l in $listeners) { $l.Stop() }
 }
 $p = $null
-while ([HlSync]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+while ([HlSync2]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
 
 if ($packets.Count -eq 0) {
     Write-Warn 'No history was captured. Keep this window open while you scroll the history in the game, then try again.'
     return
 }
 
-$text = [HlSync]::Pack($packets)
+$text = [HlSync2]::Pack($packets)
 Set-Clipboard -Value $text
 Write-Ok ("Done: {0} pages copied to your clipboard." -f $packets.Count)
 Write-Host 'Go to the Import page on the site and press Ctrl+V.'

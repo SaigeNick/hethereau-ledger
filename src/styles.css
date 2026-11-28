@@ -2536,3 +2536,36 @@ h2.spaced {
 .page-head .share-card-btn {
   margin: 0;
 }
+
+/* Newest saved pulls under the sync command: where scrolling can stop. */
+.since {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--night);
+}
+.since p {
+  margin: 0;
+}
+.since {
+  text-align: left;
+}
+.since-list {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.since-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .cmd code {
+    flex-basis: 100%;
+  }
+}
+.cmd code {
+  overflow-wrap: anywhere;
+}
