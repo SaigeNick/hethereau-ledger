@@ -14,7 +14,7 @@
 # memory. Uses only what ships with Windows: PowerShell + .NET raw sockets.
 
 $ErrorActionPreference = 'Stop'
-$HlVersion = '1.3.0'
+$HlVersion = '1.3.1'
 $targets = @()
 if (Get-Variable HlSince -ErrorAction SilentlyContinue) { $targets = @($HlSince | Where-Object { $_ }) }
 Remove-Variable HlSince -ErrorAction SilentlyContinue
@@ -34,7 +34,7 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     return
 }
 
-if (-not ('HlSync5' -as [type])) {
+if (-not ('HlSync6' -as [type])) {
 Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Concurrent;
@@ -46,7 +46,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
 
-public class HlSync5 {
+public class HlSync6 {
     public static ConcurrentQueue<byte[]> Found = new ConcurrentQueue<byte[]>();
     public static long Seen = 0;
     public static long Pages = 0;
@@ -59,7 +59,7 @@ public class HlSync5 {
     private Thread thread;
     private volatile bool running;
 
-    public HlSync5(string ip) {
+    public HlSync6(string ip) {
         sock = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.IP);
         sock.Bind(new IPEndPoint(IPAddress.Parse(ip), 0));
         sock.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.HeaderIncluded, true);
@@ -286,6 +286,38 @@ public class HlSync5 {
         return sb.ToString();
     }
 
+    // Header numbers and first bytes of a few frames, to see the format when nothing unpacks.
+    public static string Samples() {
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        List<TcpStream> game = new List<TcpStream>();
+        lock (tcp) { foreach (TcpStream st in tcp.Values) { if (gameTcp.Contains(st.Port)) { game.Add(st); } } }
+        game.Sort((a, b) => b.Bytes.CompareTo(a.Bytes));
+        if (game.Count == 0) { return ""; }
+        byte[] s = Reassemble(game[0].Segs);
+        if (s == null) { return ""; }
+        int pos = 0, shown = 0, idx = 0;
+        while (pos + 8 <= s.Length && shown < 4) {
+            int size = BitConverter.ToInt32(s, pos);
+            int f = pos + 4;
+            if (size < 20 || (long)f + size > s.Length) { break; }
+            int hs = BitConverter.ToInt32(s, f);
+            long so = (long)f + 12 + hs;
+            if (size > 200 && hs >= 0 && so + 4 <= (long)f + size) {
+                int ds = BitConverter.ToInt32(s, (int)so);
+                int d0 = (int)so + 4;
+                int take = Math.Min(16, Math.Max(0, Math.Min(ds, s.Length - d0)));
+                bool ok;
+                byte[] dec = ds > 0 && d0 + ds <= f + size ? Lz4(s, d0, ds, out ok) : null;
+                sb.AppendFormat("  frame {0}: size {1}, header {2}, data {3}, head {4}, data {5}, lz4 {6} bytes\n", idx, size, hs, ds,
+                    BitConverter.ToString(s, f, Math.Min(16, size)), BitConverter.ToString(s, d0, take), dec == null ? 0 : dec.Length);
+                shown++;
+            }
+            pos = f + size;
+            idx++;
+        }
+        return sb.ToString();
+    }
+
     private static void CountFrames(byte[] s, out int frames, out int lz4, out bool marker) {
         frames = 0; lz4 = 0; marker = false;
         int pos = 0, n = s.Length;
@@ -367,31 +399,75 @@ public class HlSync5 {
         return -1;
     }
 
-    // LZ4 block format. Returns null on anything malformed.
-    private static byte[] Lz4(byte[] src, int at, int count) {
+    // LZ4: the block format, or the frame format when the data starts with its
+    // magic number. A block may end with up to 3 zero bytes of padding. On a
+    // malformed block the output so far is returned and ok is false, so a
+    // marker that was already unpacked is still found.
+    private static bool ZeroTail(byte[] s, int p, int end) {
+        if (end - p > 3) { return false; }
+        for (int i = p; i < end; i++) { if (s[i] != 0) { return false; } }
+        return true;
+    }
+
+    private static byte[] Lz4(byte[] src, int at, int count) { bool ok; return Lz4(src, at, count, out ok); }
+
+    private static byte[] Lz4(byte[] src, int at, int count, out bool ok) {
+        if (count >= 7 && src[at] == 0x04 && src[at + 1] == 0x22 && src[at + 2] == 0x4D && src[at + 3] == 0x18) {
+            return Lz4Frame(src, at, count, out ok);
+        }
+        MemoryStream o = new MemoryStream();
+        ok = Lz4Block(src, at, count, o);
+        return o.Length > 0 ? o.ToArray() : null;
+    }
+
+    private static bool Lz4Block(byte[] src, int at, int count, MemoryStream o) {
         int end = at + count;
         int p = at;
-        MemoryStream o = new MemoryStream();
         while (p < end) {
+            if (ZeroTail(src, p, end)) { return true; }
             int token = src[p++];
             int lit = token >> 4;
-            if (lit == 15) { int b; do { if (p >= end) { return null; } b = src[p++]; lit += b; } while (b == 255); }
-            if (p + lit > end) { return null; }
+            if (lit == 15) { int b; do { if (p >= end) { return false; } b = src[p++]; lit += b; } while (b == 255); }
+            if (p + lit > end) { return false; }
             o.Write(src, p, lit);
             p += lit;
-            if (p >= end) { break; }
-            if (p + 2 > end) { return null; }
+            if (p >= end || ZeroTail(src, p, end)) { return true; }
+            if (p + 2 > end) { return false; }
             int off = src[p] | (src[p + 1] << 8);
             p += 2;
-            if (off == 0 || off > o.Length) { return null; }
+            if (off == 0 || off > o.Length) { return false; }
             int ml = token & 15;
-            if (ml == 15) { int b; do { if (p >= end) { return null; } b = src[p++]; ml += b; } while (b == 255); }
+            if (ml == 15) { int b; do { if (p >= end) { return false; } b = src[p++]; ml += b; } while (b == 255); }
             ml += 4;
-            if (o.Length + ml > (64 << 20)) { return null; }
+            if (o.Length + ml > (64 << 20)) { return false; }
             long from = o.Length - off;
             for (int i = 0; i < ml; i++) { o.WriteByte(o.GetBuffer()[from + i]); }
         }
-        return o.ToArray();
+        return true;
+    }
+
+    private static byte[] Lz4Frame(byte[] src, int at, int count, out bool ok) {
+        ok = false;
+        int end = at + count;
+        int p = at + 4;
+        int flg = src[p];
+        p += 2;
+        if ((flg & 0x08) != 0) { p += 8; }
+        if ((flg & 0x01) != 0) { p += 4; }
+        p += 1;
+        MemoryStream o = new MemoryStream();
+        while (p + 4 <= end) {
+            uint size = BitConverter.ToUInt32(src, p);
+            p += 4;
+            if (size == 0) { ok = true; break; }
+            bool raw = (size & 0x80000000u) != 0;
+            int len = (int)(size & 0x7FFFFFFFu);
+            if (len < 0 || p + len > end) { break; }
+            if (raw) { o.Write(src, p, len); } else if (!Lz4Block(src, p, len, o)) { break; }
+            p += len;
+            if ((flg & 0x10) != 0) { p += 4; }
+        }
+        return o.Length > 0 ? o.ToArray() : null;
     }
 
     // "HL1:" + base64(gzip(frames)), frame = u32 length + payload.
@@ -441,7 +517,7 @@ if ($answer -match '^\s*[yY\u0442\u0422]') {
         $exe = (Get-Process -Id $PID).Path
         New-NetFirewallRule -DisplayName $ruleName -Description 'Lets the Hethereau Ledger sync command read incoming game data. Removed when the command finishes.' -Direction Inbound -Action Allow -Program $exe -Protocol TCP -Profile Any -ErrorAction Stop | Out-Null
         $wantAch = $true
-        [HlSync5]::TcpOn = $true
+        [HlSync6]::TcpOn = $true
         Write-Ok '  Temporary rule added.'
         $blocked = @(Get-NetFirewallApplicationFilter -Program $exe -ErrorAction SilentlyContinue | Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object { $_.Direction -eq 'Inbound' -and $_.Action -eq 'Block' -and $_.Enabled -eq 'True' })
         if ($blocked.Count) { Write-Warn ('  Another firewall rule blocks PowerShell ({0}); achievements may still not come through.' -f ($blocked[0].DisplayName)) }
@@ -450,15 +526,15 @@ if ($answer -match '^\s*[yY\u0442\u0422]') {
     }
 }
 
-[HlSync5]::SetTargets($targets.Count)
-for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync5]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
+[HlSync6]::SetTargets($targets.Count)
+for ($i = 0; $i -lt $targets.Count; $i++) { [HlSync6]::AddTarget($i, [long]$targets[$i].Lo, [long]$targets[$i].Hi) }
 
 $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.AddressState -eq 'Preferred' } |
     Select-Object -ExpandProperty IPAddress)
 $listeners = @()
 foreach ($a in $addresses) {
-    try { $l = New-Object HlSync5($a); $l.Start(); $listeners += $l } catch { }
+    try { $l = New-Object HlSync6($a); $l.Start(); $listeners += $l } catch { }
 }
 if (-not $listeners) {
     Write-Warn 'Could not listen to the network. If Windows Firewall asked about PowerShell, allow it and run again.'
@@ -475,10 +551,10 @@ function Update-Ports {
     $ids = Game-Ids
     if ($ids.Count) { $script:gameIds = $ids }
     $list = @(Get-NetUDPEndpoint -OwningProcess $script:gameIds -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync5]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    [HlSync6]::SetPorts([int[]]@($list | Where-Object { $_ } | ForEach-Object { [int]$_ }))
     $tcpPorts = @(Get-NetTCPConnection -OwningProcess $script:gameIds -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort)
-    [HlSync5]::AddGameTcpPorts([int[]]@($tcpPorts | Where-Object { $_ } | ForEach-Object { [int]$_ }))
-    [HlSync5]::PruneTcp()
+    [HlSync6]::AddGameTcpPorts([int[]]@($tcpPorts | Where-Object { $_ } | ForEach-Object { [int]$_ }))
+    [HlSync6]::PruneTcp()
 }
 Update-Ports
 
@@ -516,18 +592,18 @@ $last = [DateTime]::UtcNow
 try {
     while ($true) {
         $p = $null
-        while ([HlSync5]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+        while ([HlSync6]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
         if (([DateTime]::UtcNow - $last).TotalSeconds -ge 1) {
             Update-Ports
             $last = [DateTime]::UtcNow
             for ($i = 0; $i -lt $targets.Count; $i++) {
-                if ([HlSync5]::Reached[$i] -and -not $announced[$i]) {
+                if ([HlSync6]::Reached[$i] -and -not $announced[$i]) {
                     $announced[$i] = $true
                     Write-Host ''
                     Write-Ok ("  OK  {0}: reached saved pulls, no need to turn more pages." -f $targets[$i].Name)
                 }
             }
-            Write-Host ("`r  history pages captured: {0}   " -f [HlSync5]::Pages) -NoNewline
+            Write-Host ("`r  history pages captured: {0}   " -f [HlSync6]::Pages) -NoNewline
             if (-not (Game-Ids).Count -and -not $closedNoted) { $closedNoted = $true; Write-Host ''; Write-Warn 'The game is closed. Start it again, or press Enter to finish.' }
             if ((Game-Ids).Count) { $closedNoted = $false }
         }
@@ -542,11 +618,11 @@ try {
     if ($wantAch) { Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue }
 }
 $p = $null
-while ([HlSync5]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
+while ([HlSync6]::Found.TryDequeue([ref]$p)) { $packets.Add($p) }
 
 # Achievements, if the login happened while this was running.
 $ach = $null
-if ($wantAch) { try { Update-Ports; $ach = [HlSync5]::FindAchievements() } catch { } }
+if ($wantAch) { try { Update-Ports; $ach = [HlSync6]::FindAchievements() } catch { } }
 if (-not $wantAch) {
     # Achievements were not requested this time.
 } elseif ($ach) {
@@ -563,7 +639,8 @@ if (-not $wantAch) {
         $conns = @(Get-NetTCPConnection -OwningProcess $script:gameIds -ErrorAction SilentlyContinue)
         $v6 = @($conns | Where-Object { $_.LocalAddress -match ':' }).Count
         Write-Host ("  game processes: {0}; game TCP connections now: {1} (IPv6: {2})" -f ($script:gameIds -join ','), $conns.Count, $v6) -ForegroundColor DarkGray
-        Write-Host ([HlSync5]::Diagnose()) -ForegroundColor DarkGray -NoNewline
+        Write-Host ([HlSync6]::Diagnose()) -ForegroundColor DarkGray -NoNewline
+        Write-Host ([HlSync6]::Samples()) -ForegroundColor DarkGray -NoNewline
     } catch { Write-Host ('  ' + $_.Exception.Message) -ForegroundColor DarkGray }
 }
 
@@ -572,7 +649,7 @@ if ($packets.Count -eq 0) {
     return
 }
 
-$text = [HlSync5]::Pack($packets)
+$text = [HlSync6]::Pack($packets)
 Set-Clipboard -Value $text
 Write-Ok ("Done: {0} pages copied to your clipboard." -f $packets.Count)
 Write-Host 'Go to the Import page on the site and press Ctrl+V.'
