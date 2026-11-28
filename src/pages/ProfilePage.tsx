@@ -3,10 +3,10 @@ import { driveAvailable, removeFile, setDriveFlag, signIn, signOut } from '../li
 import { _setDriveStatus, useDriveSync } from '../lib/driveSync'
 import { useI18n } from '../lib/i18n'
 import { shareSig } from '../lib/autoShare'
+import { DangerZone } from '../components/DangerZone'
 import { QrCode } from '../components/QrCode'
 import { createShare, deleteShare, shareUrl, ShareUnavailable, updateShare } from '../lib/share'
 import { isStoreState, useStore } from '../lib/store'
-import { POOL_IDS } from '../lib/types'
 
 function ConfirmButton({ label, onConfirm }: { label: string; onConfirm: () => void }) {
   const { t } = useI18n()
@@ -17,12 +17,12 @@ function ConfirmButton({ label, onConfirm }: { label: string; onConfirm: () => v
       <button className="btn btn--danger" onClick={() => (setArmed(false), onConfirm())}>
         {label}
       </button>
-      <button className="link-btn" onClick={() => setArmed(false)}>
+      <button className="link-btn" aria-label={t('common.close')} onClick={() => setArmed(false)}>
         ✕
       </button>
     </span>
   ) : (
-    <button className="btn btn--ghost" onClick={() => setArmed(true)}>
+    <button className="btn btn--danger-outline" onClick={() => setArmed(true)}>
       {label}
     </button>
   )
@@ -192,15 +192,7 @@ export function ProfilePage() {
         </div>
       </section>
 
-      <section>
-        <h2>{t('profile.danger')}</h2>
-        <div className="actions wrap">
-          {POOL_IDS.filter((p) => active.records[p].length > 0).map((p) => (
-            <ConfirmButton key={p} label={t('profile.clearPool', { pool: t(`pool.${p}` as never) })} onConfirm={() => store.clearPool(p)} />
-          ))}
-          <ConfirmButton label={t('profile.delete')} onConfirm={() => store.deleteProfile(active.id)} />
-        </div>
-      </section>
+      <DangerZone />
     </div>
   )
 }

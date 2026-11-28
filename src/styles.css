@@ -2597,3 +2597,92 @@ h2.spaced {
 .ach-how a:hover {
   color: var(--pink);
 }
+
+/* Danger zone: set apart in red so nobody deletes by accident or misses it. */
+.danger-zone {
+  margin-top: 40px;
+  padding: 20px;
+  border: 1px solid rgba(255, 107, 87, 0.45);
+  border-radius: 16px;
+  background: rgba(255, 107, 87, 0.05);
+}
+.danger-zone > h2 {
+  margin-top: 0;
+  color: var(--bad);
+}
+.danger-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 107, 87, 0.2);
+}
+.danger-row > div:first-child {
+  flex: 1 1 320px;
+}
+.danger-row h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.danger-row p {
+  margin: 0;
+}
+.danger-row--all h3 {
+  color: var(--bad);
+}
+.danger-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.danger-controls {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.danger-controls select {
+  width: auto;
+  min-height: 42px;
+}
+.btn--danger-outline {
+  background: none;
+  border-color: rgba(255, 107, 87, 0.6);
+  color: var(--bad);
+}
+.btn--danger-outline:hover {
+  background: rgba(255, 107, 87, 0.12);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.btn--danger:hover {
+  filter: brightness(1.08);
+}
+.btn--danger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.modal--danger[open] {
+  border-color: rgba(255, 107, 87, 0.5);
+}
+.modal--danger h2 {
+  margin-top: 0;
+  color: var(--bad);
+}
+.danger-type {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+@media (max-width: 600px) {
+  .danger-zone {
+    padding: 16px;
+  }
+  .danger-row .btn,
+  .danger-controls {
+    width: 100%;
+  }
+  .danger-controls select {
+    flex: 1;
+  }
+}
