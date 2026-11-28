@@ -3,6 +3,7 @@ import { useI18n } from '../lib/i18n'
 import { decodePackets, looksLikeSync, unpackSync } from '../lib/nteDecoder'
 import { useStore } from '../lib/store'
 import { encodeTargets, newestTargets } from '../lib/syncHint'
+import { achievementsFromFrames, completedSiteIds } from '../lib/achievementsImport'
 import { POOL_IDS } from '../lib/types'
 
 import { ImportResults, type ResultLine as Line } from './ImportResults'
@@ -12,7 +13,7 @@ export function SyncImport() {
   const { t, fmtDate, lang } = useI18n()
   const fmtDateTime = (time: string) =>
     new Date(time.replace(' ', 'T') + 'Z').toLocaleString(lang === 'uk' ? 'uk-UA' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
-  const { importParsed, active } = useStore()
+  const { importParsed, active, setAchievements } = useStore()
   const [text, setText] = useState('')
   const [lines, setLines] = useState<Line[]>([])
   const [busy, setBusy] = useState(false)
@@ -39,7 +40,8 @@ export function SyncImport() {
     }
     setBusy(true)
     try {
-      const recordsByPool = decodePackets(await unpackSync(value))
+      const frames = await unpackSync(value)
+      const recordsByPool = decodePackets(frames)
       const out: Line[] = []
       for (const pool of POOL_IDS) {
         const records = recordsByPool[pool]
@@ -54,6 +56,15 @@ export function SyncImport() {
         if (before.length && prevNewest && oldestNew > prevNewest) {
           out.push({ ok: false, text: t('sync.gap', { pool: t(`pool.${pool}` as never), date: fmtDate(prevNewest.replace(' ', 'T')) }) })
         }
+      }
+      // Achievements, when the command saw the login.
+      const found = achievementsFromFrames(frames)
+      if (found.length) {
+        const before = new Set(active.achievements ?? [])
+        const ids = await completedSiteIds(found)
+        const fresh = ids.filter((id) => !before.has(id)).length
+        if (ids.length) setAchievements(ids, true)
+        out.push({ ok: true, added: fresh, text: t('sync.achDone', { added: fresh, total: new Set([...before, ...ids]).size }) })
       }
       setLines(out.length ? out : [{ ok: false, text: t('sync.empty') }])
       if (out.length) setText('')
@@ -136,7 +147,10 @@ export function SyncImport() {
             </a>
           </p>
         </li>
-        <li>{t('sync.step3')}</li>
+        <li>
+          {t('sync.step3')}
+          <p className="muted small ach-hint">{t('sync.achHint')}</p>
+        </li>
         <li>{t('sync.step4')}</li>
       </ol>
       <label className="paste">

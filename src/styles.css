@@ -3216,3 +3216,15 @@ h2.spaced {
 .install-section h2 {
   margin-top: 0;
 }
+
+.ach-hint {
+  margin: 6px 0 0;
+}
+.ach-auto {
+  margin: -8px 0 20px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--teal);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: rgba(79, 227, 210, 0.07);
+  font-size: 0.92rem;
+}

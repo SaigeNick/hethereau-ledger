@@ -4,12 +4,13 @@ import { ImportError, parseExport } from '../lib/importer'
 import { newId, useStore } from '../lib/store'
 import { POOL_IDS, type PoolId, type PullRecord } from '../lib/types'
 import { SyncImport } from '../components/SyncImport'
+import { completedSiteIds, parseAchievementExport } from '../lib/achievementsImport'
 
 import { ImportResults, type ResultLine as Line } from '../components/ImportResults'
 
 export function ImportPage() {
   const { t } = useI18n()
-  const { importParsed } = useStore()
+  const { importParsed, active, setAchievements } = useStore()
   const [lines, setLines] = useState<Line[]>([])
   const [over, setOver] = useState(false)
   const input = useRef<HTMLInputElement>(null)
@@ -18,7 +19,17 @@ export function ImportPage() {
     const out: Line[] = []
     for (const file of Array.from(files)) {
       try {
-        const parsed = parseExport(await file.text())
+        const text = await file.text()
+        const found = parseAchievementExport(text)
+        if (found) {
+          const before = new Set(active.achievements ?? [])
+          const ids = await completedSiteIds(found)
+          const fresh = ids.filter((id) => !before.has(id)).length
+          if (ids.length) setAchievements(ids, true)
+          out.push({ ok: true, added: fresh, text: t('sync.achDone', { added: fresh, total: new Set([...before, ...ids]).size }) })
+          continue
+        }
+        const parsed = parseExport(text)
         const res = importParsed(parsed)
         out.push({ ok: true, added: res.added, text: t('import.result', { pool: t(`pool.${res.pool}` as never), added: res.added, dup: res.duplicates }) })
         if (res.createdProfile) out.push({ ok: true, text: t('import.newProfile') })

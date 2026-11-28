@@ -1,4 +1,5 @@
 import type { PoolId, PullRecord } from './types'
+import { isAchievementFrame } from './achievementsImport'
 import { ticksToTime } from './importer'
 
 /**
@@ -263,7 +264,7 @@ export function toRecords(rows: RawRow[]): PullRecord[] {
 
 /** Full pipeline: packets in, records per pool out. */
 export function decodePackets(packets: Uint8Array[]): Record<PoolId, PullRecord[]> {
-  const pages = packets.flatMap(decodePacket)
+  const pages = packets.filter((p) => !isAchievementFrame(p)).flatMap(decodePacket)
   const result = {} as Record<PoolId, PullRecord[]>
   for (const stream of assemble(pages)) {
     for (const rec of toRecords(stream)) (result[rec.pool] ??= []).push(rec)

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { rollsUk } from '../lib/plural'
 import { useI18n } from '../lib/i18n'
 import { useStore } from '../lib/store'
@@ -61,6 +62,8 @@ const TEXT = {
     spoilers: 'Показувати приховані',
     hidden: 'Приховане досягнення',
     howTo: 'Як отримати?',
+    auto: 'Не хочеться відмічати вручну? Команда на сторінці імпорту забирає досягнення прямо з гри.',
+    autoLink: 'Імпортувати з гри',
     hiddenGuide: 'Як отримати: гайд по прихованих (GameWith, англ.)',
     hiddenHint: 'Умову видно після отримання або коли ввімкнено «Показувати приховані»',
     reward: (a: number) => `+${a} Annulith`,
@@ -84,6 +87,8 @@ const TEXT = {
     spoilers: 'Show hidden ones',
     hidden: 'Hidden achievement',
     howTo: 'How to get it?',
+    auto: 'Don’t want to tick them by hand? The command on the import page takes achievements straight from the game.',
+    autoLink: 'Import from the game',
     hiddenGuide: 'How to get it: hidden achievements guide (GameWith)',
     hiddenHint: 'The condition shows once you have it, or when Show hidden ones is on',
     reward: (a: number) => `+${a} Annulith`,
@@ -166,6 +171,9 @@ export function AchievementsPage() {
     <article className="ach">
       <h1>{x.title}</h1>
       <p className="lead">{x.lead}</p>
+      <p className="ach-auto">
+        {x.auto} <Link to="/import">{x.autoLink}</Link>
+      </p>
 
       <section className="ach-summary">
         <p className="ach-count">
