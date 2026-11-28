@@ -342,6 +342,30 @@ select:focus {
   padding: 48px 0;
   max-width: 640px;
 }
+.empty-features {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.empty-features li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.empty-features li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--teal);
+  transform: rotate(45deg);
+}
 .page-title {
   margin-bottom: 28px;
 }

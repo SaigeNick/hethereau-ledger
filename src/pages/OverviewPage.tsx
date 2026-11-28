@@ -18,6 +18,11 @@ export function OverviewPage() {
       <div className="empty">
         <h1>{t('overview.empty.title')}</h1>
         <p className="lead">{t('overview.empty.body')}</p>
+        <ul className="empty-features">
+          {(['f1', 'f2', 'f3', 'f4', 'f5'] as const).map((k) => (
+            <li key={k}>{t(`overview.empty.${k}`)}</li>
+          ))}
+        </ul>
         <div className="actions">
           <Link className="btn" to="/import">
             {t('overview.empty.import')}

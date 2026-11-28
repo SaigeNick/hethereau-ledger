@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /s$
+Disallow: /s?
+
+Sitemap: https://hethereau-ledger.pages.dev/sitemap.xml
