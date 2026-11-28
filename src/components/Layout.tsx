@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Icon, type IconName } from './Icon'
+import { InstallButton } from './InstallApp'
 import { ProfileAvatar } from './ProfileHeader'
 import { KOFI_URL, REPO_URL } from '../config'
 import { useI18n, type TKey } from '../lib/i18n'
@@ -181,6 +182,12 @@ export function Layout() {
                 </NavLink>
               </li>
             ))}
+            <li>
+              <InstallButton className="sheet-btn">
+                <Icon name="install" />
+                <span>{t('nav.install')}</span>
+              </InstallButton>
+            </li>
           </ul>
         </div>
       </dialog>
@@ -195,6 +202,7 @@ export function Footer() {
       <div className="footer-text">
         <p>{t('footer.fan')}</p>
         <p className="footer-links">
+          <InstallButton className="link-btn footer-install">{t('nav.install')}</InstallButton>
           <NavLink to="/guide">{t('nav.guide')}</NavLink>
           <NavLink to="/faq">{t('footer.faq')}</NavLink>
           <NavLink to="/privacy">{t('footer.privacy')}</NavLink>

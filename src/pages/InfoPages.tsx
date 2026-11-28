@@ -219,11 +219,18 @@ const FAQ: Record<Lang, Faq> = {
             ],
           },
           {
+            q: 'Можна встановити сайт як застосунок?',
+            a: [
+              'Так. На Android і в Chrome чи Edge на ПК натисніть «Встановити застосунок» у меню «Ще» або внизу сторінки. На iPhone відкрийте сайт у Safari, натисніть «Поділитися» і виберіть «На початковий екран».',
+              'Застосунок відкривається без панелей браузера і працює без інтернету з уже збереженими крутками. Імпорт, синхронізація й статистика гравців потребують інтернету. Оновлення сайту застосунок підтягує сам.',
+            ],
+          },
+          {
             q: 'Я очистив браузер і не можу видалити своє посилання. Що робити?',
             a: ['Напишіть нам ({contact}) і вкажіть посилання — ми видалимо його вручну.'],
           },
           {
-            q: 'Як працює «Ти удачливіший за X% гравців»?',
+            q: 'Як працює «Вам щастить більше, ніж X% гравців»?',
             a: [
               'Сайт анонімно надсилає лише числа з лімітованих банерів: скільки кидків і на якому кидку випав кожен S-персонаж, а також регіон сервера, якщо ви його вибрали в профілі. Без імені, UID чи IP. З них рахуються середні значення спільноти й ваше місце серед гравців — загалом і у вашому регіоні.',
               'Не хочете брати участь — натисніть «Відмовитися» внизу [політики конфіденційності](#/privacy), і ваші числа видаляться.',
@@ -363,6 +370,13 @@ const FAQ: Record<Lang, Faq> = {
             a: [
               'Create a link on the [Profile](#/profile) page on your PC and scan the QR code with your phone. Press “Save on this device” and your pulls appear on the phone. The link updates itself after every import on the PC; on the phone just open it again and press “Update the copy”.',
               'Another way is to connect Google Drive on both devices in [Profile](#/profile). Your pulls then sync through your own Drive.',
+            ],
+          },
+          {
+            q: 'Can I install the site as an app?',
+            a: [
+              'Yes. On Android and in Chrome or Edge on a PC, press “Install the app” in the More menu or at the bottom of the page. On iPhone, open the site in Safari, tap Share and choose “Add to Home Screen”.',
+              'The app opens without browser bars and works offline with the pulls you already saved. Importing, sync and player stats need the internet. The app picks up site updates on its own.',
             ],
           },
           {

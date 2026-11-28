@@ -3122,3 +3122,70 @@ h2.spaced {
     align-items: flex-start;
   }
 }
+
+/* Install the app */
+.sheet-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.footer-install {
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.install-icon {
+  border-radius: 12px;
+}
+.install-steps {
+  margin: 12px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+}
+.install-hint {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: center;
+  margin: 0 0 20px;
+  padding: 14px 44px 14px 14px;
+  border: 1px solid rgba(79, 227, 210, 0.35);
+  border-radius: 14px;
+  background: rgba(79, 227, 210, 0.06);
+}
+.install-hint img {
+  border-radius: 10px;
+}
+.install-hint p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+.install-hint-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.install-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+}
+.install-hint-actions .link-btn {
+  white-space: nowrap;
+}

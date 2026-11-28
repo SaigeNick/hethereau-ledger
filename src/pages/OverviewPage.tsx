@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { BannerTimer } from '../components/BannerTimer'
 import { GlobalCard } from '../components/GlobalCard'
+import { InstallHint } from '../components/InstallApp'
 import { ShareCard } from '../components/ShareCard'
 import { hasAnyRecords, OverviewBody } from '../components/PoolViews'
 import { loadDemo } from '../lib/demoLoader'
@@ -25,6 +26,7 @@ export function OverviewPage() {
             {t('nav.guide')}
           </Link>
         </div>
+        <InstallHint />
         <BannerTimer />
       </div>
     )
@@ -36,6 +38,7 @@ export function OverviewPage() {
         <h1>{active.name || t('overview.title')}</h1>
         <ShareCard profile={active} />
       </div>
+      <InstallHint />
       <BannerTimer />
       <GlobalCard profile={active} />
       <OverviewBody records={active.records} base="" />

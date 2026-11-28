@@ -9,6 +9,8 @@ import '@fontsource/golos-text/latin-400.css'
 import '@fontsource/golos-text/cyrillic-600.css'
 import '@fontsource/golos-text/latin-600.css'
 import './styles.css'
+// Catches the browser's install prompt before React mounts.
+import './lib/install'
 import App from './App'
 
 createRoot(document.getElementById('root')!).render(
