@@ -8,11 +8,12 @@ export default defineConfig({
   plugins: [
     react(),
     // Installable app: the shell and data files are cached, so the site opens
-    // offline with the pulls already saved in the browser. New deploys apply
-    // on the next visit.
+    // offline with the pulls already saved in the browser. A new deploy takes
+    // over as soon as the browser notices it, and the page reloads onto it.
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'script-defer',
+      // Registered in main.tsx, which reloads the page onto a new version.
+      injectRegister: false,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: './',
@@ -39,6 +40,9 @@ export default defineConfig({
         // Server routes must always reach the network.
         navigateFallbackDenylist: [/^\/api\//, /^\/s$/, /^\/cal\//, /\.ps1$/, /\.cmd$/, /\.ics$/],
         cleanupOutdatedCaches: true,
+        // A new version takes over at once instead of waiting for every tab to close.
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: ({ url, sameOrigin }) => sameOrigin && (url.pathname.startsWith('/portraits/') || url.pathname.startsWith('/achievements/')),
