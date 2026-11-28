@@ -8,10 +8,12 @@ const call = (country?: string) =>
   })
 
 describe('country block', () => {
-  it('shows a notice to Russia', async () => {
-    const res = await call('RU')
-    expect(res.status).toBe(403)
-    expect(await res.text()).toContain('недоступний у Росії')
+  it('shows a notice to Russia and Belarus', async () => {
+    for (const c of ['RU', 'BY']) {
+      const res = await call(c)
+      expect(res.status).toBe(403)
+      expect(await res.text()).toContain('недоступний у Росії та Білорусі')
+    }
   })
   it('lets everyone else through', async () => {
     for (const c of ['UA', 'SK', 'US', undefined]) expect(await (await call(c)).text()).toBe('site')

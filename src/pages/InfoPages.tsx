@@ -570,7 +570,7 @@ const PRIVACY: Record<Lang, Doc> = {
         title: 'Хостинг',
         body: [
           'Сайт розміщено на Cloudflare Pages. Як і будь-який хостинг, Cloudflare обробляє технічні дані запитів (IP-адресу, тип браузера, час), щоб доставити сторінку й захистити її від атак. Ми не отримуємо журналів відвідувань. Подробиці — у [політиці Cloudflare](https://www.cloudflare.com/privacypolicy/).',
-          'Сайт недоступний з Росії. Для цього Cloudflare визначає країну запиту за IP-адресою; сайт використовує її лише в момент запиту й ніде не зберігає.',
+          'Сайт недоступний з Росії та Білорусі. Для цього Cloudflare визначає країну запиту за IP-адресою; сайт використовує її лише в момент запиту й ніде не зберігає.',
         ],
       },
       {
@@ -675,7 +675,7 @@ const PRIVACY: Record<Lang, Doc> = {
         title: 'Hosting',
         body: [
           'The site is hosted on Cloudflare Pages. Like any host, Cloudflare processes technical request data (IP address, browser type, time) to deliver pages and protect them from attacks. We do not receive visitor logs. See the [Cloudflare privacy policy](https://www.cloudflare.com/privacypolicy/).',
-          'The site is not available from Russia. For this, Cloudflare tells the country of each request from its IP address; the site uses it only at that moment and stores it nowhere.',
+          'The site is not available from Russia and Belarus. For this, Cloudflare tells the country of each request from its IP address; the site uses it only at that moment and stores it nowhere.',
         ],
       },
       {

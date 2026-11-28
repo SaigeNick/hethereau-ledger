@@ -1,7 +1,7 @@
 // Runs before the site, the API and the sync script (see public/_routes.json).
-// Visitors from Russia get a short notice instead of the site. Cloudflare
+// Visitors from Russia and Belarus get a short notice instead of the site. Cloudflare
 // tells the country from the IP address, so a VPN gets around it.
-const BLOCKED = new Set(['RU'])
+const BLOCKED = new Set(['RU', 'BY'])
 
 const PAGE = `<!doctype html>
 <html lang="uk">
@@ -18,8 +18,8 @@ const PAGE = `<!doctype html>
 </head>
 <body>
 <main>
-  <p>Сайт недоступний у Росії.</p>
-  <p class="en" lang="en">This site is not available in Russia.</p>
+  <p>Сайт недоступний у Росії та Білорусі.</p>
+  <p class="en" lang="en">This site is not available in Russia and Belarus.</p>
 </main>
 </body>
 </html>`
